@@ -8,6 +8,7 @@ from Link import Link
 
 import random
 import math
+import pdb
 
 
 def find_path(graph, src):
@@ -69,35 +70,40 @@ def find_path(graph, src):
     return path
 
 
-def gen_a_link(route, task_p, task_c, mtestSet):
+def find_link(linkSet, node_1, node_2):
+    '''
+    返回linkSet中node_1与node_2之间的链路，无方向
+    找到返回Link，否则返回None
+    '''
+    key = '{}_{}'.format(node_1, node_2)
+    if key in linkSet:
+        return linkSet[key]
+    key = '{}_{}'.format(node_2, node_1)
+    if key in linkSet:
+        return linkSet[key]
+    return None
+
+
+def gen_a_link(route, task_p, task_c, linkSet, nodeSet):
 
     # 设置VLink path, exmaple:['t_0_1', 'v0', 's0', 's1', 'v3', 't_3_6']
     # 添加头: self link
     vl = []
-    vl_element_head = 'v{0}'.format(task_p.nid)
-    vl_element_tail = vl_element_head
-    vl_element = [vl_element_head, vl_element_tail]
-    speed_c = 0  # 暂时没用
-    link = Link(vl_element, speed_c, 250) # delay不知道如何设置
+    vl_ele_head = nodeSet[task_p.nid]
+    link = find_link(linkSet, vl_ele_head, vl_ele_head)
     vl.append(link)
     # 从计算好的路由中取出最短路径
     path = route[task_p.nid][task_c.nid]
     # 添加到VLink中
     for node in path:
-        vl_element_tail = mtestSet.graph.nodeSet[node]
-        vl_element = [vl_element_head, vl_element_tail]
-        speed_c = 0.08  # 100Mbit/s 链路传输一个字节需要的时间
-        if vl_element_head[0] == 's' and vl_element_tail[0] == 's':
-            speed_c = 0.008  # 1Gbit/s
-        link = Link(vl_element, speed_c, 5)  # delay不知道如何设置
+        vl_ele_tail = nodeSet[node]
+        link = find_link(linkSet, vl_ele_head, vl_ele_tail)
         vl.append(link)
         # 设置下一个头
-        vl_element_head = mtestSet.graph.nodeSet[node]
-    #添加尾： self link
-    vl_element_tail = vl_element_head
-    vl_element = [vl_element_head, vl_element_tail]
-    speed_c = 0  # 暂时没用
-    link = Link(vl_element, speed_c, 250) # delay不知道如何设置
+        vl_ele_head = nodeSet[node]
+    # 添加尾： self link
+    vl_ele_tail = vl_ele_head
+    link = find_link(linkSet, vl_ele_head, vl_ele_tail)
     vl.append(link)
 
     return vl
@@ -149,7 +155,8 @@ def gen_vlink(mtestSet, distTaskList, peroidSet):
         task_a.T = task_a.D = peroid_1
         task_b.T = task_b.D = peroid_1
 
-        vl_1 = gen_a_link(route, task_a, task_b, mtestSet)
+        vl_1 = gen_a_link(route, task_a, task_b,
+                          mtestSet.linkSet, mtestSet.graph.nodeSet)
         # 初始化VLink类
         vlink_1 = VLink(vlid, vl_1, peroid_1)
         # 添加生产者任务和消费者任务
@@ -164,7 +171,8 @@ def gen_vlink(mtestSet, distTaskList, peroidSet):
         # 设置相关任务的周期和截止时间
         task_c.T = task_c.D = peroid_2
         task_d.T = task_d.D = peroid_2
-        vl_2 = gen_a_link(route, task_c, task_d, mtestSet)
+        vl_2 = gen_a_link(route, task_c, task_d,
+                          mtestSet.linkSet, mtestSet.graph.nodeSet)
 
         vlink_2 = VLink(vlid, vl_2, peroid_2)
         vlink_2.setTaskPair(task_c, task_d)
@@ -185,6 +193,8 @@ def gen_vlink(mtestSet, distTaskList, peroidSet):
         # print(distTaskList)
 
     return True
+
+
 '''
 def gen_vlink_for_free(mtestSet, taskSet, peroidSet):
 
@@ -194,6 +204,7 @@ def gen_vlink_for_free(mtestSet, taskSet, peroidSet):
         node = mtestSet.nodeSet[taks.nid]
         #vlink = VLink(vlid, )
 '''
+
 
 def gen_wcet(mtestSet, utilization):
     '''
@@ -344,53 +355,7 @@ def gen_vl_and_task(mtestSet, peroidSet, utilization):
     return True
 
 
-def generate(mtestSet, peroidSet, utilization, granuolarity):
-    nodeNum = mtestSet.nodeNum
-    switchNum = mtestSet.switchNum
-    # init node set
-    nodeSet = []
-    for i in range(0, nodeNum):
-        nodeSet.append('v{0}'.format(i))
-    for i in range(0, switchNum):
-        nodeSet.append('s{0}'.format(i))
-
-    # init link set
-    linkSet = []
-    for i in range(0, int(nodeNum / 2)):
-        linkSet.append(['v{0}'.format(i), 's0'])
-        linkSet.append(['s0', 'v{0}'.format(i)])
-    for i in range(int(nodeNum / 2), nodeNum):
-        linkSet.append(['v{0}'.format(i), 's1'])
-        linkSet.append(['s1', 'v{0}'.format(i)])
-    linkSet.append(['s0', 's1'])
-    linkSet.append(['s1', 's0'])
-
-    print('###### 拓扑图初始化信息 ######')
-    print('LinkSet = {}'.format(linkSet))
-    print('NodeSet = {}'.format(nodeSet))
-
-    # init graph
-    mtestSet.initGraph(linkSet, nodeSet)
-
-    # init virtual link set and task set
-    gen_vl_and_task(mtestSet, peroidSet, utilization)
-
-    # init message set (static)
-
-    for i in range(len(mtestSet.vlinkSet)):
-        mvl = mtestSet.vlinkSet[i]
-        vlid = mvl.vlid
-        T = mvl.max_latency
-        size = random.randint(84, 1542)
-        mmessage = Message(vlid, T, size)
-        # 添加到测试类中
-        mtestSet.addMessage(mmessage)
-
-    print('###### Message集合初始化信息 ######')
-    for mm in mtestSet.messageSet:
-        print('Message_{}:\tT = {}, L = {}'.format(mm.vlid, mm.peroid, mm.size))
-
-    # init Frame set (static)
+def gen_frame_set(mtestSet, granuolarity):
     '''
         结构：字典: vlink id --> sub dictionary
         子字典：link id(在虚链路中的编号) --> Frame_list
@@ -418,8 +383,9 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
             mtestSet.frameSet[i][link] = []
             frame_list = mtestSet.frameSet[i][link]
             mframe = Frame(vlid, fid, link.name)
-            mframe.setPeroid (math.ceil(message.peroid / link.macrotick))
-            mframe.setDuration(math.ceil(message.size * link.speed_coefficient / link.macrotick))
+            mframe.setPeroid(math.ceil(message.peroid / link.macrotick))
+            mframe.setDuration(
+                math.ceil(message.size * link.speed_coefficient / link.macrotick))
             frame_list.append(mframe)
             fid += 1
         # 消费者的Frame生成
@@ -452,17 +418,130 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
                 fid += 1
             vlid += 1
     '''
+    # pdb.set_trace()
+    all_frame_set = mtestSet.frameSet
+    # 生成frameSet，第一层以Link检索，第二层以Vlink检索
+    all_frame_sorted_by_link = mtestSet.frameSetSortByLink
+    for vlid_t in all_frame_set:
+        vl_frame_list = all_frame_set[vlid_t]
+        for link in vl_frame_list:
+            frame_list = vl_frame_list[link]
+            for frame in frame_list:
+                # 对于每一个frame放入对应的位置
+                # 如果link索引为空，新建子字典
+                if not (link in all_frame_sorted_by_link):
+                    all_frame_sorted_by_link[link] = {}
+                # 如果vlid_t子索引为空，新建列表
+                if not (vlid_t in all_frame_sorted_by_link[link]):
+                    all_frame_sorted_by_link[link][vlid_t] = []
+                # 添加Frame
+                #print('##link:{}, vlid_t:{}, frameid:{}'.format(link.name, vlid_t, frame.fid))
+                all_frame_sorted_by_link[link][vlid_t].append(frame)
+                #print(all_frame_sorted_by_link[link][vlid_t])
+                # OK
+
+
     '''
     测试Frame集合
     '''
-    print('###### Frame集合初始化信息 ######')
-    for i in range(len(mtestSet.frameSet)):
-        frameList = mtestSet.frameSet[i]
+
+    print('###### Frame集合初始化信息(VLink版本) ######')
+    for vlid_t in all_frame_set:
+        vl_frame_list = all_frame_set[vlid_t]
+        for link in vl_frame_list:
+            frame_list = vl_frame_list[link]
+            for frame in frame_list:
+                print('Frame_{}_{}_{}:\t\tT = {}, L = {}'.format(
+                    frame.vlid, frame.lname, frame.fid, frame.T, frame.L))
+
+    print('###### Frame集合初始化信息(Link版本) ######')
+    # print(all_frame_sorted_by_link)
+    for link in all_frame_sorted_by_link:
+        link_frame_list = all_frame_sorted_by_link[link]
+        for vlid_t in link_frame_list:
+            frame_list = link_frame_list[vlid_t]
+            for frame in frame_list:
+                print('Frame_{}_{}_{}:\t\tT = {}, L = {}'.format(
+                    frame.lname, frame.vlid, frame.fid, frame.T, frame.L))
+
+
+def generate(mtestSet, peroidSet, utilization, granuolarity):
+    nodeNum = mtestSet.nodeNum
+    switchNum = mtestSet.switchNum
+    # init node set
+    nodeSet = []
+    for i in range(0, nodeNum):
+        nodeSet.append('v{0}'.format(i))
+    for i in range(0, switchNum):
+        nodeSet.append('s{0}'.format(i))
+
+    # init link set
+    tlinkSet = {}  # testSet中的linkset,包括selflink和无向的物理link
+    linkSet = []  # 拓扑图中的linkset, 双向物理link
+    for i in range(0, int(nodeNum / 2)):
+        linkSet.append(['v{0}'.format(i), 's0'])
+        linkSet.append(['s0', 'v{0}'.format(i)])
+        # setup tlinkSet
+        vl_ele_head = 'v{}'.format(i)
+        vl_ele_tail = 's0'
+        vl_element = [vl_ele_head, vl_ele_tail]
+        speed = 0.08  # 100Mbit/s 链路传输一个字节需要的时间
+        link = Link(vl_element, speed, 5)  # FIXME delay
+        tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
+    for i in range(int(nodeNum / 2), nodeNum):
+        linkSet.append(['v{0}'.format(i), 's1'])
+        linkSet.append(['s1', 'v{0}'.format(i)])
+        # setup tlinkSet
+        vl_ele_head = 'v{}'.format(i)
+        vl_ele_tail = 's1'
+        vl_element = [vl_ele_head, vl_ele_tail]
+        speed = 0.08  # 100Mbit/s 链路传输一个字节需要的时间
+        link = Link(vl_element, speed, 5)  # FIXME delay
+        tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
+    # 交换机之间
+    linkSet.append(['s0', 's1'])
+    linkSet.append(['s1', 's0'])
+    # tlinkSet
+    vl_element = ['s0', 's1']
+    speed = 0.008  # 1Gbit/s
+    link = Link(vl_element, speed, 5)
+    tlinkSet['s0_s1'] = link
+    # tlinkSet selflink
+    for i in range(0, nodeNum):
+        vl_element = ['v{}'.format(i), 'v{}'.format(i)]
+        speed = 0  # 暂时不用
+        link = Link(vl_element, speed, 250)  # FIXME delay
+        tlinkSet['v{0}_v{0}'.format(i)] = link
+
+    print('###### 拓扑图初始化信息 ######')
+    print('LinkSet = {}'.format(linkSet))
+    print('NodeSet = {}'.format(nodeSet))
+
+    # init graph
+    mtestSet.initGraph(linkSet, nodeSet)
+    # init test link set (包括selflink 和 无向的物理link)
+    mtestSet.initLinkSet(tlinkSet)
+
+    # init virtual link set and task set
+    gen_vl_and_task(mtestSet, peroidSet, utilization)
+
+    # init message set (static)
+
+    for i in range(len(mtestSet.vlinkSet)):
         mvl = mtestSet.vlinkSet[i]
-        # print(frameList)
-        for j in range(len(frameList)):
-            subFrameList = frameList[mvl.vl[j]]
-            for frame in subFrameList:
-                print('Frame_{}_{}_{}:\tT = {}, L = {}'.format(frame.vlid, frame.lname, frame.fid, frame.T, frame.L))
+        vlid = mvl.vlid
+        T = mvl.max_latency
+        size = random.randint(84, 1542)
+        mmessage = Message(vlid, T, size)
+        # 添加到测试类中
+        mtestSet.addMessage(mmessage)
+
+    print('###### Message集合初始化信息 ######')
+    for mm in mtestSet.messageSet:
+        print('Message_{}:\tT = {}, L = {}'.format(mm.vlid, mm.peroid, mm.size))
+
+    # init Frame set (static)
+    gen_frame_set(mtestSet, granuolarity)
+
 
 __version__ = '0.5'

@@ -11,7 +11,9 @@ class TestSet:
     def __init__(self, nodeNum, switchNum):
         self.graph = Graph()
         self.vlinkSet = []
+        self.linkSet = {}
         self.frameSet = {}
+        self.frameSetSortByLink = {}
         self.messageSet = []
         self.taskSet = {}
         self.nodeNum = nodeNum
@@ -20,6 +22,9 @@ class TestSet:
     def initGraph(self, linkSet, nodeSet):
         self.graph.initNodeSet(nodeSet)
         self.graph.initLinkSet(linkSet)
+
+    def initLinkSet(self, linkSet):
+        self.linkSet = linkSet
 
     def addVLink(self, vlink):
         self.vlinkSet.append(vlink)
