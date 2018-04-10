@@ -11,8 +11,15 @@ def frame_constraints(slover, testSet):
     return True
 
 
-def link_constraints():
-
+def link_constraints(slover, frameSetSortedByLink):
+    for link in frameSetSortedByLink:
+        subFrameDict = frameSetSortedByLink[link]
+        frameSomeLink = []
+        for vlid in subFrameDict:
+            frameList = subFrameDict[vlid]
+            for frame in frameList:
+                frameSomeLink.append(frame)
+         
     return True
 
 
