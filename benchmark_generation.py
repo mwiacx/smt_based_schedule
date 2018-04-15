@@ -215,8 +215,8 @@ def gen_wcet(mtestSet, utilization):
     '''
     # 常量定义
     free_task_ratio = 0.75  # free任务利用率占端节点利用率的比重
-    all_task_num = 16  # 每个端节点任务的个数
-    comu_task_num = 8  # 每个端节点的通信任务的个数
+    all_task_num = 4  # 每个端节点任务的个数
+    comu_task_num = 2  # 每个端节点的通信任务的个数
 
     free_task_util = free_task_ratio * utilization  # free任务的利用率
     comu_task_util = utilization - free_task_util  # 通信任务的利用率
@@ -297,9 +297,9 @@ def gen_vl_and_task(mtestSet, peroidSet, utilization):
     nodeNum = mtestSet.nodeNum
 
     # 常量定义
-    vlinkNum = int(8 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
-    allTaskNum = 16
-    communTaskNum = 8  # 通信任务个数，每个端节点上
+    vlinkNum = int(2 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
+    allTaskNum = 4
+    communTaskNum = 2  # 通信任务个数，每个端节点上
     # 存储每个节点上任务集合的字典
     allTaskList = {}
     # 用于生成虚链路，存储每个节点上的通信任务集
