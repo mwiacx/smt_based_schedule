@@ -6,19 +6,23 @@ def frame_constraints(slover, testSet):
     all_frame_set = testSet.frameSet
     for vlid_t in all_frame_set:
         vl_frame_list = all_frame_set[vlid_t]
-        for frame in vl_frame_list:
-            slover.add(frame.offest > 0, frame.offest < frame.T - frame.L)
+        for link in vl_frame_list:
+            framelist = vl_frame_list[link]
+            for frame in framelist:
+                slover.add(frame.offset > 0, frame.offset < frame.T - frame.L)
     return True
 
 
 def link_constraints(slover, frameSetSortedByLink):
     for link in frameSetSortedByLink:
         subFrameDict = frameSetSortedByLink[link]
-        frameSomeLink = []
+        frameSameLink = []
         for vlid in subFrameDict:
             frameList = subFrameDict[vlid]
             for frame in frameList:
-                frameSomeLink.append(frame)
+                frameSameLink.append(frame)
+        # 对于同一个物理链路的任意两个帧成立：
+        
          
     return True
 
@@ -48,9 +52,11 @@ def define_var(testSet):
     for vlid_t in all_frame_set:
         vl_frame_list = all_frame_set[vlid_t]
         for link in vl_frame_list:
-            frame = vl_frame_list[link]
-            frame.offest = Int('frame_{}_{}_{}.offest'.format(
-                frame.vlid, frame.lname, frame.fid))
+            framelist = vl_frame_list[link]
+            for frame in framelist:
+                frame.offset = Int('frame_{}_{}_{}.offset'.format(
+                    frame.vlid, frame.lname, frame.fid))
+                print(frame.offset)
     return
 
 
@@ -63,5 +69,6 @@ def z3_run(testSet):
     s = Solver()
     # 生成Frame约束
     frame_constraints(s, testSet)
+    print(s)
 
     return True
