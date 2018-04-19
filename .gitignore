@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 # *.so
 
+# user define
+param_test.txt
+
 # Distribution / packaging
 .Python
 env/

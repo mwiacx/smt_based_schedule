@@ -13,6 +13,7 @@ class TestSet:
         self.vlinkSet = []
         self.linkSet = {}
         self.frameSet = {}
+        self.taskFrameSet = {}
         self.frameSetSortByLink = {}
         self.messageSet = []
         self.taskSet = {}

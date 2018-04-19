@@ -6,7 +6,8 @@ class Link:
     macrotick = 1 # us
     buffercon = 50 #us
 
-    def __init__(self, name, speed_coefficient, delay):
+    def __init__(self, name, speed_coefficient, delay, macrotick):
         self.name = name
         self.speed_coefficient = speed_coefficient
         self.delay = delay
+        self.macrotick = macrotick
