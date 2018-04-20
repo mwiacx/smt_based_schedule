@@ -14,7 +14,7 @@ if __name__ == '__main__':
     print('###### 执行One_Shot算法 ######')
     print('# 生成测试集', end=',')
     st = time.clock()
-    benchmark_generation.generate(mtestSet, peroidSet_3, 0.3, 250)
+    benchmark_generation.generate(mtestSet, peroidSet_3, 0.1, 250)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
     print('# 调用Z3求解器')

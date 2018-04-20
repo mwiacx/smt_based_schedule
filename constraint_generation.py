@@ -50,7 +50,7 @@ def link_constraints(slover, frameSetSortedByLink):
     '''
     已验证
     '''
-    #print ('###### 测试link constraints生成 ######')
+    # print ('###### 测试link constraints生成 ######')
     for link in frameSetSortedByLink:
         subFrameDict = frameSetSortedByLink[link]
         frameSameLink = []
@@ -74,12 +74,13 @@ def link_constraints(slover, frameSetSortedByLink):
                 for alpha in range(int(hp / frame_i.T)):
                     for beta in range(int(hp / frame_j.T)):
                         single_link_constraint = Or(
-                            (frame_i.offset + alpha * frame_i.T >= frame_j.offset + beta * frame_j.T + frame_j.L),
+                            (frame_i.offset + alpha * frame_i.T >=
+                             frame_j.offset + beta * frame_j.T + frame_j.L),
                             (frame_j.offset + beta * frame_j.T >= frame_i.offset + alpha * frame_i.T + frame_i.L))
-                        #print('alpha={},beta={}:\nconstraint={}'.format(
+                        # print('alpha={},beta={}:\nconstraint={}'.format(
                         #    alpha, beta, single_link_constraint))
                         slover.add(single_link_constraint)
-                #print(slover)
+                # print(slover)
     # print(slover.check())
     # print(slover.model())
     # pdb.set_trace()
@@ -114,15 +115,15 @@ def virtual_link_constraints(slover, frameSet, vlinkSet, g):
             frameFirstLinkJ = frameListLinkJ[0]
             aCon = (linkJ.macrotick * frameFirstLinkJ.offset - linkI.delay -
                     g >= linkI.macrotick * (frameLastLinkI.offset + frameLastLinkI.L))
-            #print(aCon)
+            # print(aCon)
             slover.add(aCon)
-        #print(slover)
+        # print(slover)
     #time_start = time.time()
-    #print(slover.check())
-    #print(slover.model())
+    # print(slover.check())
+    # print(slover.model())
     #time_end = time.time()
-    #print('#计算用时：{} s'.format(time_end-time_start))
-    #pdb.set_trace()
+    # print('#计算用时：{} s'.format(time_end-time_start))
+    # pdb.set_trace()
 
     return True
 
@@ -147,15 +148,15 @@ def end_to_end_latency_constraints(slover, frameSet, vlinkSet):
         # 约束
         aCon = (lastLink.macrotick * (lastFrame.offset + lastFrame.L)
                 <= (firstLink.macrotick * firstFrame.offset + vlinkSet[vlid_t].max_latency))
-        #print(aCon)
+        # print(aCon)
         slover.add(aCon)
-    #print(slover)
+    # print(slover)
     #time_start = time.time()
-    #print(slover.check())
-    #print(slover.model())
+    # print(slover.check())
+    # print(slover.model())
     #time_end = time.time()
-    #print('#计算用时：{} s'.format(time_end-time_start))
-    #pdb.set_trace()
+    # print('#计算用时：{} s'.format(time_end-time_start))
+    # pdb.set_trace()
 
     return True
 
@@ -176,30 +177,32 @@ def task_constraints(slover, frameSet, vlinkSet):
         task = vlinkSet[vlid_t].task_p
         frameList = frameSameVLink[firstSelfLink]
         # 生成生成者约束
-        #for frame in frameList:
+        # for frame in frameList:
         #    aCon = (frame.offset >= task.offset)
         #    print(aCon)
         #    slover.add(aCon)
         lastFrame = frameList[len(frameList)-1]
         # FIXME: 这里lastFrame.L与论文理解不同
-        aCon = (lastFrame.offset <= task.D / firstSelfLink.macrotick - lastFrame.L)
+        aCon = (lastFrame.offset <= task.D /
+                firstSelfLink.macrotick - lastFrame.L)
         slover.add(aCon)
         # 如何虚链路不是SelfLink，有消费者
         if len(vl) > 2:
             lastSelfLink = vl[len(vl)-1]
             task = vlinkSet[vlid_t].task_c
             frameList = frameSameVLink[lastSelfLink]
-            #for frame in frameList:
+            # for frame in frameList:
             #    aCon = (frame.offset >= task.offset)
             #    slover.add(aCon)
             lastFrame = frameList[len(frameList)-1]
             # FIXME: 这里lastFrame.L与论文理解不同
-            aCon = (lastFrame.offset <= task.D / lastSelfLink.macrotick - lastFrame.L)
+            aCon = (lastFrame.offset <= task.D /
+                    lastSelfLink.macrotick - lastFrame.L)
             slover.add(aCon)
-    #print(slover)
-    #print(slover.check())
-    #print(slover.model())
-    #pdb.set_trace()
+    # print(slover)
+    # print(slover.check())
+    # print(slover.model())
+    # pdb.set_trace()
 
     return True
 
@@ -224,7 +227,7 @@ def virtual_frame_sequence_constraints(slover, frameSet, vlinkSet):
             frameI = frameList[frameId]
             frameJ = frameList[frameId+1]
             aCon = (frameJ.offset >= frameI.offset + frameI.L)
-            #print(aCon)
+            # print(aCon)
             slover.add(aCon)
 
         # 2.如果虚链路不是SelfLink，有消费者
@@ -236,10 +239,10 @@ def virtual_frame_sequence_constraints(slover, frameSet, vlinkSet):
                 frameI = frameList[frameId]
                 frameJ = frameList[frameId+1]
                 aCon = (frameJ.offset >= frameI.offset + frameI.L)
-                #print(aCon)
+                # print(aCon)
                 slover.add(aCon)
-    #print(slover)
-    #pdb.set_trace()
+    # print(slover)
+    # pdb.set_trace()
     return True
 
 
@@ -249,7 +252,14 @@ def task_precedence_contraints(slover, frameSetSortByTask, taskA, taskB):
     '''
     frameSetA = frameSetSortByTask[taskA]
     frameSetB = frameSetSortByTask[taskB]
-    # FIXME: 对概念理解有疑惑
+    lastFrameOfA = frameSetA[len(frameSetA)-1]
+    fisrtFrameOfB = frameSetB[0]
+    linkA = taskA.selfLink
+    linkB = taskB.selfLink
+    aCon = linkB.macrotick * fisrtFrameOfB.offset >= linkA.macrotick * \
+        (lastFrameOfA.offset + lastFrameOfA.L)
+    print(aCon)
+    slover.add(aCon)
     return True
 
 
@@ -297,7 +307,7 @@ def z3_run(testSet):
     end_to_end_latency_constraints(s, testSet.frameSet, testSet.vlinkSet)
     et = time.clock()
     print('\t  耗时：{} s'.format(et-st))
-    # 
+    #
     print('\t# 生成task constraints...')
     st = time.clock()
     task_constraints(s, testSet.frameSet, testSet.vlinkSet)
@@ -316,11 +326,15 @@ def z3_run(testSet):
         et = time.clock()
         print('  耗时：{} s'.format(et-st))
         print('# 已求解，一个可行解为：')
-        print(s.model())
+        # resultFile = open('result/result_{}.txt'.format(int(time.time())), "w")
+        model = s.model()
+        print(model)
+        # resultFile.write(model)
+
     else:
         et = time.clock()
         print('  耗时：{} s'.format(et-st))
         print('# 没有可行解...')
-    #pdb.set_trace()
+    # pdb.set_trace()
 
     return True

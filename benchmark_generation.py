@@ -12,7 +12,7 @@ import math
 import pdb
 
 # 全局测试参数输出文件
-outputFile = open('param_output/param_test_{}.txt'.format(int(time.time())), "w")
+outputFile = open('param_output/param_{}.txt'.format(int(time.time())), "w")
 
 def find_path(graph, src):
     '''
@@ -387,11 +387,11 @@ def gen_frame_set(mtestSet):
     for i in range(len(mtestSet.vlinkSet)):
         mvl = mtestSet.vlinkSet[i]
         vlid = mvl.vlid
-        message = mtestSet.messageSet[i]  # 消息
         mtestSet.frameSet[i] = {}
         fid = 0
         # 生产者任务的Frame生成
         task = mvl.task_p
+        mtestSet.taskFrameSet[task] = []
         link = mvl.vl[0]
         mtestSet.frameSet[i][link] = []
         frame_list = mtestSet.frameSet[i][link]
@@ -400,8 +400,12 @@ def gen_frame_set(mtestSet):
             frame.setPeroid(int(task.T / link.macrotick))
             frame.setDuration(1)  # CPU Line Frame.L = 1 macrotick
             frame_list.append(frame)
+            mtestSet.taskFrameSet[task].append(frame)
             fid += 1
+        if mvl.isSelfLink:
+            continue
         # 消息的Frame生成
+        message = mtestSet.messageSet[i]  # 消息
         for j in range(1, len(mvl.vl) - 1):
             link = mvl.vl[j]  # 物理链路
             mtestSet.frameSet[i][link] = []
@@ -414,6 +418,7 @@ def gen_frame_set(mtestSet):
             fid += 1
         # 消费者的Frame生成
         task = mvl.task_c
+        mtestSet.taskFrameSet[task] = []
         link = mvl.vl[len(mvl.vl) - 1]
         mtestSet.frameSet[i][link] = []
         frame_list = mtestSet.frameSet[i][link]
@@ -422,26 +427,9 @@ def gen_frame_set(mtestSet):
             frame.setPeroid(int(task.T / link.macrotick))
             frame.setDuration(1)  # CPU Line Frame.L = 1 macrotick
             frame_list.append(frame)
+            mtestSet.taskFrameSet[task].append(frame)
             fid += 1
-    '''
-    # 生成free-task的Frame
-    for i in range(len(mtestSet.taskSet)):
-        tasklist = mtestSet.taskSet[i]
-        vlid = len(mtestSet.frameSet)
-        for task in tasklist:
-            # 排除通信任务
-            if task.tid < 8:
-                continue
-            fid = 0
-            mtestSet.frameSet[vlid] = []
-            for j in range(math.ceil(task.C / granuolarity)):
-                frame = Frame( vlid , fid) # self link -1
-                frame.setPeroid(int(task.T / granuolarity))
-                frame.setDuration(1)  # CPU Line Frame.L = 1 macrotick
-                mtestSet.frameSet[vlid].append(frame)
-                fid += 1
-            vlid += 1
-    '''
+    
     # pdb.set_trace()
     all_frame_set = mtestSet.frameSet
     # 生成frameSet，第一层以Link检索，第二层以Vlink检索
@@ -485,6 +473,13 @@ def gen_frame_set(mtestSet):
             frame_list = link_frame_list[vlid_t]
             for frame in frame_list:
                 outputFile.write('Frame_({})_{}_{}\t: T = {},\tL = {}\n'.format(
+                    frame.lname[0]+'_'+frame.lname[1], frame.vlid, frame.fid, frame.T, frame.L))
+    outputFile.write('###### Frame集合初始化信息(Task版本) ######\n')
+    for task in mtestSet.taskFrameSet:
+        task_frame_list = mtestSet.taskFrameSet[task]
+        outputFile.write('Task_{}_{}:\n'.format(task.nid, task.tid))
+        for frame in task_frame_list:
+            outputFile.write('\tFrame_({})_{}_{}\t: T = {},\tL = {}\n'.format(
                     frame.lname[0]+'_'+frame.lname[1], frame.vlid, frame.fid, frame.T, frame.L))
 
 
@@ -556,6 +551,8 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
 
     for i in range(len(mtestSet.vlinkSet)):
         mvl = mtestSet.vlinkSet[i]
+        if mvl.isSelfLink:
+            continue
         vlid = mvl.vlid
         T = mvl.max_latency
         size = random.randint(84, 1542)
