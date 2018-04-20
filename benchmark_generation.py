@@ -6,12 +6,13 @@ from Message import Message
 from Frame import Frame
 from Link import Link
 
+import time
 import random
 import math
 import pdb
 
 # 全局测试参数输出文件
-out_file = None
+outputFile = open('param_output/param_test_{}.txt'.format(int(time.time())), "w")
 
 def find_path(graph, src):
     '''
@@ -234,8 +235,8 @@ def gen_wcet(mtestSet, utilization):
     '''
     # 常量定义
     free_task_ratio = 0.75  # free任务利用率占端节点利用率的比重
-    all_task_num = 16  # 每个端节点任务的个数
-    comu_task_num = 8  # 每个端节点的通信任务的个数
+    all_task_num = 4  # 每个端节点任务的个数
+    comu_task_num = 2  # 每个端节点的通信任务的个数
 
     free_task_util = free_task_ratio * utilization  # free任务的利用率
     comu_task_util = utilization - free_task_util  # 通信任务的利用率
@@ -279,7 +280,7 @@ def gen_wcet(mtestSet, utilization):
         taskList[task_index].C = int(rest_util * taskList[task_index].T)
         # print('###临时测试 task_{}_{} 利用率为：{}'.format(i,task_index,rest_util))
 
-    out_file.write('###### 验证端节点的利用率 ######')
+    outputFile.write('###### 验证端节点的利用率 ######\n')
     '''
     验证free任务的总利用为 0.75 * utilization
     '''
@@ -290,7 +291,7 @@ def gen_wcet(mtestSet, utilization):
             if (taskList[j].C < 0):
                 print('@@@@@@@@@@@@ ErroR in gen_wcet：执行时间为负')
             testUtil += taskList[j].C / taskList[j].T
-        out_file.write('端节点{0}上free任务利用率：{1:.4f}'.format(i, testUtil))
+        outputFile.write('端节点{0}上free任务利用率：{1:.4f}\n'.format(i, testUtil))
 
     '''
     验证通信任务的总利用为 0.25 * utilization
@@ -302,7 +303,7 @@ def gen_wcet(mtestSet, utilization):
             if (taskList[j].C < 0):
                 print('@@@@@@@@@@@@ ErroR in gen_wcet：执行时间为负')
             testUtil += taskList[j].C / taskList[j].T
-        out_file.write('端节点{0}上通信任务利用率：{1:.4f}'.format(i, testUtil))
+        outputFile.write('端节点{0}上通信任务利用率：{1:.4f}\n'.format(i, testUtil))
 
 
 def gen_vl_and_task(mtestSet, peroidSet, utilization):
@@ -316,9 +317,9 @@ def gen_vl_and_task(mtestSet, peroidSet, utilization):
     nodeNum = mtestSet.nodeNum
 
     # 常量定义
-    vlinkNum = int(8 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
-    allTaskNum = 16
-    communTaskNum = 8  # 通信任务个数，每个端节点上
+    vlinkNum = int(2 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
+    allTaskNum = 4
+    communTaskNum = 2  # 通信任务个数，每个端节点上
     # 存储每个节点上任务集合的字典
     allTaskList = {}
     # 用于生成虚链路，存储每个节点上的通信任务集
@@ -357,23 +358,23 @@ def gen_vl_and_task(mtestSet, peroidSet, utilization):
     '''
     测试生成的任务集合和生成的虚拟链路集合
     '''
-    out_file.write('###### 生成的任务集合信息 ######')
+    outputFile.write('###### 生成的任务集合信息 ######\n')
     for i in range(nodeNum):
-        out_file.write('End System id {}:'.format(i))
+        outputFile.write('End System id {}:\n'.format(i))
         for j in range(allTaskNum):
-            out_file.write('task_{}_{}: C = {},\tT = D = {},\tvlid={},\tselfLink.name={}'.format(
+            outputFile.write('task_{}_{}: C = {},\tT = D = {},\tvlid={},\tselfLink.name={}\n'.format(
                 allTaskList[i][j].nid, allTaskList[i][j].tid, allTaskList[i][j].C,
                 allTaskList[i][j].T, allTaskList[i][j].vlid, allTaskList[i][j].selfLink.name))
-    out_file.write('###### 生成的虚拟链路信息 ######')
+    outputFile.write('###### 生成的虚拟链路信息 ######\n')
     for i in range(vlinkNum):
         vlink = mtestSet.vlinkSet[i]
-        out_file.write('vlink id {}:'.format(vlink.vlid))
-        # out_file.write(mtestSet.vlinkSet[i].vl, end=', ')
+        outputFile.write('vlink id {}:\n'.format(vlink.vlid))
+        # outputFile.write(mtestSet.vlinkSet[i].vl, end=', ')
         for link in vlink.vl:
-            out_file.write('{}.s = {}'.format(link.name, link.speed_coefficient), end=', ')
-        out_file.write('head = task_{}_{}, tail = task_{}_{}'.format(
-            vlink.task_p.nid, vlink.task_p.tid, vlink.task_c.nid, vlink.task_c.tid), end=', ')
-        out_file.write('max_latency = {}.'.format(mtestSet.vlinkSet[i].max_latency))
+            outputFile.write('{}.s = {}, '.format(link.name, link.speed_coefficient))
+        outputFile.write('head = task_{}_{}, tail = task_{}_{}, '.format(
+            vlink.task_p.nid, vlink.task_p.tid, vlink.task_c.nid, vlink.task_c.tid))
+        outputFile.write('max_latency = {}.\n'.format(mtestSet.vlinkSet[i].max_latency))
 
     return True
 
@@ -458,40 +459,42 @@ def gen_frame_set(mtestSet):
                 if not (vlid_t in all_frame_sorted_by_link[link]):
                     all_frame_sorted_by_link[link][vlid_t] = []
                 # 添加Frame
-                # out_file.write('##link:{}, vlid_t:{}, frameid:{}'.format(link.name, vlid_t, frame.fid))
+                # outputFile.write('##link:{}, vlid_t:{}, frameid:{}'.format(link.name, vlid_t, frame.fid))
                 all_frame_sorted_by_link[link][vlid_t].append(frame)
-                # out_file.write(all_frame_sorted_by_link[link][vlid_t])
+                # outputFile.write(all_frame_sorted_by_link[link][vlid_t])
                 # OK
 
     '''
     测试Frame集合
     '''
 
-    out_file.write('###### Frame集合初始化信息(VLink版本) ######')
+    outputFile.write('###### Frame集合初始化信息(VLink版本) ######\n')
     for vlid_t in all_frame_set:
         vl_frame_list = all_frame_set[vlid_t]
         for link in vl_frame_list:
             frame_list = vl_frame_list[link]
             for frame in frame_list:
-                out_file.write('Frame_{}_({})_{}\t: T = {},\tL = {}'.format(
+                outputFile.write('Frame_{}_({})_{}\t: T = {},\tL = {}\n'.format(
                     frame.vlid, frame.lname[0]+'_'+frame.lname[1], frame.fid, frame.T, frame.L))
 
-    out_file.write('###### Frame集合初始化信息(Link版本) ######')
-    # out_file.write(all_frame_sorted_by_link)
+    outputFile.write('###### Frame集合初始化信息(Link版本) ######\n')
+    # outputFile.write(all_frame_sorted_by_link)
     for link in all_frame_sorted_by_link:
         link_frame_list = all_frame_sorted_by_link[link]
         for vlid_t in link_frame_list:
             frame_list = link_frame_list[vlid_t]
             for frame in frame_list:
-                out_file.write('Frame_({})_{}_{}\t: T = {},\tL = {}'.format(
+                outputFile.write('Frame_({})_{}_{}\t: T = {},\tL = {}\n'.format(
                     frame.lname[0]+'_'+frame.lname[1], frame.vlid, frame.fid, frame.T, frame.L))
 
 
 def generate(mtestSet, peroidSet, utilization, granuolarity):
     nodeNum = mtestSet.nodeNum
     switchNum = mtestSet.switchNum
-    # 打开参数输出文件
-    out_file = open('param_test.txt', "w")
+
+    #
+    print('测试参数生成在{}文件'.format(outputFile.name))
+    
     # init node set
     nodeSet = []
     for i in range(0, nodeNum):
@@ -537,9 +540,9 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         link = Link(vl_element, speed, 250, 250)  # FIXME delay
         tlinkSet['v{0}_v{0}'.format(i)] = link
 
-    out_file.write('###### 拓扑图初始化信息 ######')
-    out_file.write('LinkSet = {}'.format(linkSet))
-    out_file.write('NodeSet = {}'.format(nodeSet))
+    outputFile.write('###### 拓扑图初始化信息 ######\n')
+    outputFile.write('LinkSet = {}\n'.format(linkSet))
+    outputFile.write('NodeSet = {}\n'.format(nodeSet))
 
     # init graph
     mtestSet.initGraph(linkSet, nodeSet)
@@ -560,12 +563,12 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         # 添加到测试类中
         mtestSet.addMessage(mmessage)
 
-    out_file.write('###### Message集合初始化信息 ######')
+    outputFile.write('###### Message集合初始化信息 ######\n')
     for mm in mtestSet.messageSet:
-        out_file.write('Message_{}:\tT = {}, L = {}'.format(mm.vlid, mm.peroid, mm.size))
+        outputFile.write('Message_{}:\tT = {}, L = {}\n'.format(mm.vlid, mm.peroid, mm.size))
 
     # init Frame set (static)
     gen_frame_set(mtestSet)
 
 
-__version__ = '0.5'
+__version__ = '1.0'

@@ -274,50 +274,53 @@ def z3_run(testSet):
     # 求解器定义
     s = Solver()
     # 生成Frame约束
-    print('\t# 生成frame constraints', end='---')
+    print('\t# 生成frame constraints...')
     st = time.clock()
     frame_constraints(s, testSet.frameSet)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     #
-    print('\t# 生成link constraints', end='---')
+    print('\t# 生成link constraints...')
     st = time.clock()
     link_constraints(s, testSet.frameSetSortByLink)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     # 同步精度通常为1us
-    print('\t# 生成virtual link constraints', end='---')
+    print('\t# 生成virtual link constraints...')
     st = time.clock()
     virtual_link_constraints(s, testSet.frameSet, testSet.vlinkSet, 1)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     #
-    print('\t# 生成end to end latency constraints', end='---')
+    print('\t# 生成end to end latency constraints...')
     st = time.clock()
     end_to_end_latency_constraints(s, testSet.frameSet, testSet.vlinkSet)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     # 
-    print('\t# 生成task constraints', end='---')
+    print('\t# 生成task constraints...')
     st = time.clock()
     task_constraints(s, testSet.frameSet, testSet.vlinkSet)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     #
-    print('\t# 生成virtual frame sequence constraints', end='---')
+    print('\t# 生成virtual frame sequence constraints...')
     st = time.clock()
     virtual_frame_sequence_constraints(s, testSet.frameSet, testSet.vlinkSet)
     et = time.clock()
-    print('耗时：{} s'.format(et-st))
+    print('\t  耗时：{} s'.format(et-st))
     #
-    print('# Z3计算中', end='---')
+    print('# Z3计算中...')
     st = time.clock()
-    if s.check() == 'sat':
+    if s.check() == sat:
+        et = time.clock()
+        print('  耗时：{} s'.format(et-st))
+        print('# 已求解，一个可行解为：')
         print(s.model())
     else:
-        print('unsat')
-    et = time.clock()
-    print('耗时：{} s'.format(et-st))
+        et = time.clock()
+        print('  耗时：{} s'.format(et-st))
+        print('# 没有可行解...')
     #pdb.set_trace()
 
     return True

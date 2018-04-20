@@ -7,7 +7,7 @@ __pycache__/
 # *.so
 
 # user define
-param_test.txt
+param_output/*
 
 # Distribution / packaging
 .Python
