@@ -1,4 +1,4 @@
-from pysmt.shortcuts import Symbol, Or, GE, LT, Int, LE
+from pysmt.shortcuts import Symbol, Or, GE, LT, Int, LE, And, GT
 from pysmt.shortcuts import Plus, Times, Minus, Div
 from pysmt.shortcuts import Solver, is_sat
 from pysmt.typing import INT
@@ -23,9 +23,11 @@ def frame_constraints(solver, frameSet):
         for link in vl_frame_list:
             framelist = vl_frame_list[link]
             for frame in framelist:
-                aCon = (frame.offset > 0, frame.offset < frame.T - frame.L)
-                # print(aCon)
-                solver.add(aCon)
+                #aCon = (frame.offset > 0, frame.offset < frame.T - frame.L)
+                aCon = And(GT(frame.offset, 0), 
+                           LT(frame.offset, Int(frame.T-frame.L)))
+                print(aCon)
+                solver.add_assertion(aCon)
 
     # print(solver)
     # pdb.set_trace()
@@ -77,13 +79,18 @@ def link_constraints(solver, frameSetSortedByLink):
                 # 对于任意的阿尔法和贝塔属于....都满足：
                 for alpha in range(int(hp / frame_i.T)):
                     for beta in range(int(hp / frame_j.T)):
+                        # single_link_constraint = Or(
+                        #    (frame_i.offset + alpha * frame_i.T >=
+                        #     frame_j.offset + beta * frame_j.T + frame_j.L),
+                        #    (frame_j.offset + beta * frame_j.T >= frame_i.offset + alpha * frame_i.T + frame_i.L))
                         single_link_constraint = Or(
-                            (frame_i.offset + alpha * frame_i.T >=
-                             frame_j.offset + beta * frame_j.T + frame_j.L),
-                            (frame_j.offset + beta * frame_j.T >= frame_i.offset + alpha * frame_i.T + frame_i.L))
-                        # print('alpha={},beta={}:\nconstraint={}'.format(
-                        #    alpha, beta, single_link_constraint))
-                        solver.add(single_link_constraint)
+                            GE(Plus(frame_i.offset, Int(alpha*frame_i.T)),
+                               Plus(frame_j.offset, Int(beta*frame_j.T+frame_j.L))),
+                            GE(Plus(frame_j.offset, Int(beta*frame_j.T)),
+                               Plus(frame_i.offset, Int(alpha*frame_i.T+frame_i.L))))
+                        print('alpha={},beta={}:\nconstraint={}'.format(
+                              alpha, beta, single_link_constraint))
+                        solver.add_assertion(single_link_constraint)
                 # print(solver)
     # print(solver.check())
     # print(solver.model())
@@ -117,11 +124,15 @@ def virtual_link_constraints(solver, frameSet, vlinkSet, g):
             frameLastLinkI = frameListLinkI[len(frameListLinkI)-1]
             # 第一个帧
             frameFirstLinkJ = frameListLinkJ[0]
-            #aCon = (linkJ.macrotick * frameFirstLinkJ.offset - linkI.delay -
+            # aCon = (linkJ.macrotick * frameFirstLinkJ.offset - linkI.delay -
             #        g >= linkI.macrotick * (frameLastLinkI.offset + frameLastLinkI.L))
-            aCon = GE()
+            aCon = GE(
+                Minus(Times(Int(linkJ.macrotick), frameFirstLinkJ.offset),
+                      Int(linkI.delay + g)),
+                Times(Int(linkI.macrotick), Plus(
+                    frameLastLinkI.offset, Int(frameLastLinkI.L))))
             print(aCon)
-            solver.add(aCon)
+            solver.add_assertion(aCon)
         # print(solver)
     #time_start = time.time()
     # print(solver.check())
@@ -153,12 +164,13 @@ def end_to_end_latency_constraints(solver, frameSet, vlinkSet):
         # 约束
         # aCon = (lastLink.macrotick * (lastFrame.offset + lastFrame.L)
         #        <= (firstLink.macrotick * firstFrame.offset + vlinkSet[vlid_t].max_latency))
-        aCon = LE(Minus(Int(lastLink.macrotick), Plus(
-            lastFrame.offset, Int(lastFrame.L))), 
-            Plus(Minus(Int(firstLink.macrotick), firstFrame.offset), 
-            Int(vlinkSet[vlid_t].max_latency)))
+        aCon = LE(
+            Times(Int(lastLink.macrotick), Plus(
+                lastFrame.offset, Int(lastFrame.L))),
+            Plus(Times(Int(firstLink.macrotick), firstFrame.offset),
+                 Int(vlinkSet[vlid_t].max_latency)))
         print(aCon)
-        solver.add(aCon)
+        solver.add_assertion(aCon)
     # print(solver)
     #time_start = time.time()
     # print(solver.check())
@@ -197,7 +209,7 @@ def task_constraints(solver, frameSet, vlinkSet):
         aCon = LE(lastFrame.offset, Int(
             task.D / firstSelfLink.macrotick - lastFrame.L))
         print(aCon)
-        solver.add(aCon)
+        solver.add_assertion(aCon)
         # 如何虚链路不是SelfLink，有消费者
         if len(vl) > 2:
             lastSelfLink = vl[len(vl)-1]
@@ -213,7 +225,7 @@ def task_constraints(solver, frameSet, vlinkSet):
             aCon = LE(lastFrame.offset, Int(
                 task.D / firstSelfLink.macrotick - lastFrame.L))
             print(aCon)
-            solver.add(aCon)
+            solver.add_assertion(aCon)
     # print(solver)
     # print(solver.check())
     # print(solver.model())
@@ -244,7 +256,7 @@ def virtual_frame_sequence_constraints(solver, frameSet, vlinkSet):
             #aCon = (frameJ.offset >= frameI.offset + frameI.L)
             aCon = GE(frameJ.offset, Plus(frameI.offset, Int(frameI.L)))
             print(aCon)
-            solver.add(aCon)
+            solver.add_assertion(aCon)
 
         # 2.如果虚链路不是SelfLink，有消费者
         if len(vl) > 2:
@@ -255,9 +267,9 @@ def virtual_frame_sequence_constraints(solver, frameSet, vlinkSet):
                 frameI = frameList[frameId]
                 frameJ = frameList[frameId+1]
                 #aCon = (frameJ.offset >= frameI.offset + frameI.L)
-                aCon = GE(frameJ.offset, Plus(frameI.offset, frameI.L))
+                aCon = GE(frameJ.offset, Plus(frameI.offset, Int(frameI.L)))
                 print(aCon)
-                solver.add(aCon)
+                solver.add_assertion(aCon)
     # print(solver)
     # pdb.set_trace()
     return True
