@@ -235,8 +235,8 @@ def gen_wcet(mtestSet, utilization):
     '''
     # 常量定义
     free_task_ratio = 0.75  # free任务利用率占端节点利用率的比重
-    all_task_num = 4  # 每个端节点任务的个数
-    comu_task_num = 2  # 每个端节点的通信任务的个数
+    all_task_num = 16  # 每个端节点任务的个数
+    comu_task_num = 8  # 每个端节点的通信任务的个数
 
     free_task_util = free_task_ratio * utilization  # free任务的利用率
     comu_task_util = utilization - free_task_util  # 通信任务的利用率
@@ -318,8 +318,8 @@ def gen_vl_and_task(mtestSet, peroidSet, utilization):
 
     # 常量定义
     vlinkNum = int(2 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
-    allTaskNum = 4
-    communTaskNum = 2  # 通信任务个数，每个端节点上
+    allTaskNum = 16
+    communTaskNum = 8  # 通信任务个数，每个端节点上
     # 存储每个节点上任务集合的字典
     allTaskList = {}
     # 用于生成虚链路，存储每个节点上的通信任务集
@@ -395,10 +395,10 @@ def gen_frame_set(mtestSet):
         link = mvl.vl[0]
         mtestSet.frameSet[i][link] = []
         frame_list = mtestSet.frameSet[i][link]
-        for j in range(math.ceil(task.C / link.macrotick)):
+        for j in range(math.ceil(task.C / link.macrotick / 1)):
             frame = Frame(vlid, fid, link.name)
             frame.setPeroid(int(task.T / link.macrotick))
-            frame.setDuration(1)  # CPU Line Frame.L = 1 macrotick
+            frame.setDuration(1)  # CPU Line Frame.L = 2 macrotick
             frame_list.append(frame)
             mtestSet.taskFrameSet[task].append(frame)
             fid += 1
@@ -422,10 +422,10 @@ def gen_frame_set(mtestSet):
         link = mvl.vl[len(mvl.vl) - 1]
         mtestSet.frameSet[i][link] = []
         frame_list = mtestSet.frameSet[i][link]
-        for j in range(math.ceil(task.C / link.macrotick)):
+        for j in range(math.ceil(task.C / link.macrotick / 1)):
             frame = Frame(vlid, fid, link.name)
             frame.setPeroid(int(task.T / link.macrotick))
-            frame.setDuration(1)  # CPU Line Frame.L = 1 macrotick
+            frame.setDuration(1)  # CPU Line Frame.L = 2 macrotick
             frame_list.append(frame)
             mtestSet.taskFrameSet[task].append(frame)
             fid += 1
@@ -566,6 +566,9 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
 
     # init Frame set (static)
     gen_frame_set(mtestSet)
+
+    #close file
+    outputFile.close()
 
 
 __version__ = '1.0'

@@ -1,6 +1,7 @@
 from pysmt.shortcuts import Symbol, Or, GE, LT, Int, LE, And, GT
 from pysmt.shortcuts import Plus, Times, Minus, Div
 from pysmt.shortcuts import Solver, is_sat
+from pysmt.logics import QF_LIA
 from pysmt.typing import INT
 
 import math
@@ -8,7 +9,7 @@ import pdb
 import time
 
 
-def frame_constraints(solver, frameSet):
+def frame_constraints(constraints, frameSet):
     '''0000000000000000
     向求解器中添加帧约束
         solver: z3求解器实例
@@ -24,10 +25,10 @@ def frame_constraints(solver, frameSet):
             framelist = vl_frame_list[link]
             for frame in framelist:
                 #aCon = (frame.offset > 0, frame.offset < frame.T - frame.L)
-                aCon = And(GT(frame.offset, 0), 
+                aCon = And(GT(frame.offset, Int(0)), 
                            LT(frame.offset, Int(frame.T-frame.L)))
-                print(aCon)
-                solver.add_assertion(aCon)
+                #print(aCon)
+                constraints.append(aCon)
 
     # print(solver)
     # pdb.set_trace()
@@ -52,7 +53,7 @@ def lcm(ipt_a, ipt_b):
     return result
 
 
-def link_constraints(solver, frameSetSortedByLink):
+def link_constraints(constraints, frameSetSortedByLink):
     '''
     已验证
     '''
@@ -88,9 +89,9 @@ def link_constraints(solver, frameSetSortedByLink):
                                Plus(frame_j.offset, Int(beta*frame_j.T+frame_j.L))),
                             GE(Plus(frame_j.offset, Int(beta*frame_j.T)),
                                Plus(frame_i.offset, Int(alpha*frame_i.T+frame_i.L))))
-                        print('alpha={},beta={}:\nconstraint={}'.format(
-                              alpha, beta, single_link_constraint))
-                        solver.add_assertion(single_link_constraint)
+                        #print('alpha={},beta={}:\nconstraint={}'.format(
+                        #      alpha, beta, single_link_constraint))
+                        constraints.append(single_link_constraint)
                 # print(solver)
     # print(solver.check())
     # print(solver.model())
@@ -99,7 +100,7 @@ def link_constraints(solver, frameSetSortedByLink):
     return True
 
 
-def virtual_link_constraints(solver, frameSet, vlinkSet, g):
+def virtual_link_constraints(constraints, frameSet, vlinkSet, g):
     '''
     生产者虚帧先于网络链路帧先于消费者的虚帧
     参数：
@@ -131,8 +132,8 @@ def virtual_link_constraints(solver, frameSet, vlinkSet, g):
                       Int(linkI.delay + g)),
                 Times(Int(linkI.macrotick), Plus(
                     frameLastLinkI.offset, Int(frameLastLinkI.L))))
-            print(aCon)
-            solver.add_assertion(aCon)
+            #print(aCon)
+            constraints.append(aCon)
         # print(solver)
     #time_start = time.time()
     # print(solver.check())
@@ -144,7 +145,7 @@ def virtual_link_constraints(solver, frameSet, vlinkSet, g):
     return True
 
 
-def end_to_end_latency_constraints(solver, frameSet, vlinkSet):
+def end_to_end_latency_constraints(constraints, frameSet, vlinkSet):
     '''
     端到端延迟不能超过允许的最大延迟，即小于等于tt-message的周期。
     参数：
@@ -169,8 +170,8 @@ def end_to_end_latency_constraints(solver, frameSet, vlinkSet):
                 lastFrame.offset, Int(lastFrame.L))),
             Plus(Times(Int(firstLink.macrotick), firstFrame.offset),
                  Int(vlinkSet[vlid_t].max_latency)))
-        print(aCon)
-        solver.add_assertion(aCon)
+        #print(aCon)
+        constraints.append(aCon)
     # print(solver)
     #time_start = time.time()
     # print(solver.check())
@@ -182,7 +183,7 @@ def end_to_end_latency_constraints(solver, frameSet, vlinkSet):
     return True
 
 
-def task_constraints(solver, frameSet, vlinkSet):
+def task_constraints(constraints, frameSet, vlinkSet):
     '''
     虚帧顺序执行（由其他约束规定），所有虚帧都处于调度窗口内（offset ---- deadline）
     参数：
@@ -208,8 +209,8 @@ def task_constraints(solver, frameSet, vlinkSet):
         #        firstSelfLink.macrotick - lastFrame.L)
         aCon = LE(lastFrame.offset, Int(
             task.D / firstSelfLink.macrotick - lastFrame.L))
-        print(aCon)
-        solver.add_assertion(aCon)
+        #print(aCon)
+        constraints.append(aCon)
         # 如何虚链路不是SelfLink，有消费者
         if len(vl) > 2:
             lastSelfLink = vl[len(vl)-1]
@@ -224,8 +225,8 @@ def task_constraints(solver, frameSet, vlinkSet):
             #        lastSelfLink.macrotick - lastFrame.L)
             aCon = LE(lastFrame.offset, Int(
                 task.D / firstSelfLink.macrotick - lastFrame.L))
-            print(aCon)
-            solver.add_assertion(aCon)
+            #print(aCon)
+            constraints.append(aCon)
     # print(solver)
     # print(solver.check())
     # print(solver.model())
@@ -234,7 +235,7 @@ def task_constraints(solver, frameSet, vlinkSet):
     return True
 
 
-def virtual_frame_sequence_constraints(solver, frameSet, vlinkSet):
+def virtual_frame_sequence_constraints(constraints, frameSet, vlinkSet):
     '''
     链路约束规定了不同任务的虚帧不会重叠，同样同一个任务的不同虚帧也不同重叠
     注意不同的是，同一节点上不会有精度问题
@@ -255,8 +256,8 @@ def virtual_frame_sequence_constraints(solver, frameSet, vlinkSet):
             frameJ = frameList[frameId+1]
             #aCon = (frameJ.offset >= frameI.offset + frameI.L)
             aCon = GE(frameJ.offset, Plus(frameI.offset, Int(frameI.L)))
-            print(aCon)
-            solver.add_assertion(aCon)
+            #print(aCon)
+            constraints.append(aCon)
 
         # 2.如果虚链路不是SelfLink，有消费者
         if len(vl) > 2:
@@ -268,14 +269,14 @@ def virtual_frame_sequence_constraints(solver, frameSet, vlinkSet):
                 frameJ = frameList[frameId+1]
                 #aCon = (frameJ.offset >= frameI.offset + frameI.L)
                 aCon = GE(frameJ.offset, Plus(frameI.offset, Int(frameI.L)))
-                print(aCon)
-                solver.add_assertion(aCon)
+                #print(aCon)
+                constraints.append(aCon)
     # print(solver)
     # pdb.set_trace()
     return True
 
 
-def task_precedence_contraints(solver, frameSetSortByTask, taskA, taskB):
+def task_precedence_contraints(constraints, frameSetSortByTask, taskA, taskB):
     '''
     任务A优先于任务B：任务A必须先于任务B完成。
     '''
@@ -289,8 +290,8 @@ def task_precedence_contraints(solver, frameSetSortByTask, taskA, taskB):
     #    (lastFrameOfA.offset + lastFrameOfA.L)
     aCon = GE(Times(Int(linkB.macrotick), fisrtFrameOfB.offset),
               Times(Int(linkA.macrotick), Plus(lastFrameOfA.offset, Int(lastFrameOfA.L))))
-    print(aCon)
-    solver.add_assertion(aCon)
+    #print(aCon)
+    constraints.append(aCon)
     return True
 
 
@@ -307,66 +308,51 @@ def define_var(testSet):
     return
 
 
-def smt_run(testSet, smtName):
+def constraints_gen(testSet):
     if not testSet:
         return False
     # 生成Z3相关的定义
     define_var(testSet)
+    # retFile = open('result/result_{}_{}.txt'.format(smtName, t), "w")
+    # 约束集合
+    constraints = []
     # 求解器定义
-    with Solver() as s:
-        # 生成Frame约束
-        print('\t# 生成frame constraints...')
-        st = time.clock()
-        frame_constraints(s, testSet.frameSet)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        #
-        print('\t# 生成link constraints...')
-        st = time.clock()
-        link_constraints(s, testSet.frameSetSortByLink)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        # 同步精度通常为1us
-        print('\t# 生成virtual link constraints...')
-        st = time.clock()
-        virtual_link_constraints(s, testSet.frameSet, testSet.vlinkSet, 1)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        #
-        print('\t# 生成end to end latency constraints...')
-        st = time.clock()
-        end_to_end_latency_constraints(s, testSet.frameSet, testSet.vlinkSet)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        #
-        print('\t# 生成task constraints...')
-        st = time.clock()
-        task_constraints(s, testSet.frameSet, testSet.vlinkSet)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        #
-        print('\t# 生成virtual frame sequence constraints...')
-        st = time.clock()
-        virtual_frame_sequence_constraints(
-            s, testSet.frameSet, testSet.vlinkSet)
-        et = time.clock()
-        print('\t  耗时：{} s'.format(et-st))
-        #
-        print('# Z3计算中...')
-        st = time.clock()
-        if s.solver():
-            et = time.clock()
-            print('  耗时：{} s'.format(et-st))
-            print('# 已求解，一个可行解为：')
-            # resultFile = open('result/result_{}.txt'.format(int(time.time())), "w")
-            model = s.get_model()
-            print(model)
-            # resultFile.write(model)
+    #with Solver(name=smtName, logic=QF_LIA) as s:
+    # 生成Frame约束
+    frame_constraints(constraints, testSet.frameSet)
+    #et = time.clock()
+    #print('\t  耗时：{} s'.format(et-st))
+    #
+    #print('\t# 生成link constraints...')
+    #st = time.clock()
+    link_constraints(constraints, testSet.frameSetSortByLink)
+    #et = time.clock()
+    # print('\t  耗时：{} s'.format(et-st))
+    # 同步精度通常为1us
+    #print('\t# 生成virtual link constraints...')
+    #st = time.clock()
+    virtual_link_constraints(constraints, testSet.frameSet, testSet.vlinkSet, 1)
+    #et = time.clock()
+    #print('\t  耗时：{} s'.format(et-st))
+    #
+    #print('\t# 生成end to end latency constraints...')
+    #st = time.clock()
+    end_to_end_latency_constraints(constraints, testSet.frameSet, testSet.vlinkSet)
+    #et = time.clock()
+    #print('\t  耗时：{} s'.format(et-st))
+    #
+    #print('\t# 生成task constraints...')
+    #st = time.clock()
+    task_constraints(constraints, testSet.frameSet, testSet.vlinkSet)
+    #et = time.clock()
+    #print('\t  耗时：{} s'.format(et-st))
+    #
+    #print('\t# 生成virtual frame sequence constraints...')
+    #st = time.clock()
+    virtual_frame_sequence_constraints(
+        constraints, testSet.frameSet, testSet.vlinkSet)
+    # pdb.set_trace()
+    
+    #retFile.close()
 
-        else:
-            et = time.clock()
-            print('  耗时：{} s'.format(et-st))
-            print('# 没有可行解...')
-        # pdb.set_trace()
-
-    return True
+    return constraints
