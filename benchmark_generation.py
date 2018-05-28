@@ -14,64 +14,6 @@ import pdb
 # 全局测试参数输出文件
 outputFile = open('param_output/param_{}.txt'.format(int(time.time())), "w")
 
-def find_path(graph, src):
-    '''
-    采用迪杰斯特拉算法简单的生成整个网络拓扑的路由
-    目前不考虑负载均衡
-    '''
-    if graph is None:
-        return None
-
-    # 生成到达矩阵
-    links = graph.linkSet  # 图中所有的链路
-    nodestrings = graph.nodeSet  # 图中所有的节点
-    nodes = [i for i in range(len(nodestrings))]
-    gList = [[float('inf') for col in range(len(nodes))]
-             for row in range(len(nodes))]
-    for link in links:
-        node_a = link[0]
-        node_b = link[1]
-        index_a = nodestrings.index(node_a)
-        index_b = nodestrings.index(node_b)
-        gList[index_a][index_b] = 1
-    for i in range(len(nodes)):
-        gList[i][i] = 0
-    # print(gList)
-    visited = []  # 表示已经路由到最短路径的节点集合
-
-    if src in nodes:
-        visited.append(src)
-        nodes.remove(src)
-    else:
-        return None
-
-    distance = {src: 0}  # 记录源节点到各个节点的距离
-    for i in nodes:
-        distance[i] = gList[src][i]
-    # print(distance)
-    path = {src: {src: []}}  # 记录源节点到每个节点的路径
-    k = pre = src
-    while nodes:
-        mid_distance = float('inf')
-        for v in visited:
-            for d in nodes:
-                new_distance = gList[src][v] + gList[v][d]
-                if new_distance < mid_distance:
-                    mid_distance = new_distance
-                    gList[src][d] = new_distance  # 更新距离
-                    k = d
-                    pre = v
-
-        distance[k] = mid_distance  # 最短路径
-        path[src][k] = [i for i in path[src][pre]]
-        path[src][k].append(k)
-        # 更新两个节点集合
-        visited.append(k)
-        nodes.remove(k)
-        # print(visited, nodes)  # 输出
-    # return path, distance
-    return path
-
 
 def find_link(linkSet, node_1, node_2):
     '''
@@ -118,8 +60,9 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
     # 生成 Virtual Link
     # 先用迪杰斯特拉算法计算整个图的路由
     route = {}
-    for i in range(len(mtestSet.graph.nodeSet)):
-        path = find_path(mtestSet.graph, i)
+    graph = mtestSet.graph
+    for i in range(len(graph.nodeSet)):
+        path = graph.find_path(i)
         #print(distance, path)
         route[i] = path[i]
     # print(route)
@@ -161,7 +104,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_b.T = task_b.D = peroid_1
 
         vl_1 = gen_a_link(route, task_a, task_b,
-                          mtestSet.linkSet, mtestSet.graph.nodeSet, False)
+                          mtestSet.linkSet, graph.nodeSet, False)
         # 初始化VLink类
         vlink_1 = VLink(vlid, vl_1, peroid_1)
         # 添加生产者任务和消费者任务
@@ -182,7 +125,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_c.T = task_c.D = peroid_2
         task_d.T = task_d.D = peroid_2
         vl_2 = gen_a_link(route, task_c, task_d,
-                          mtestSet.linkSet, mtestSet.graph.nodeSet, False)
+                          mtestSet.linkSet, graph.nodeSet, False)
 
         vlink_2 = VLink(vlid, vl_2, peroid_2)
         vlink_2.setTaskPair(task_c, task_d)
@@ -215,7 +158,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         fperoid = random.choice(peroidSet)
         task.T = task.D = fperoid
         fvl = gen_a_link(route, task, task,
-                         mtestSet.linkSet, mtestSet.graph.nodeSet, True)
+                         mtestSet.linkSet, graph.nodeSet, True)
         fvlink = VLink(vlid, fvl, fperoid)
         fvlink.setSelfLink()
         fvlink.setTaskPair(task, task)
