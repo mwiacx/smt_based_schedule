@@ -11,10 +11,11 @@ class VLink:
         self.vlid = vlid
         self.vl = vl
         self.max_latency = max_latency
+        self.isSelfLink = False
 
     def setTaskPair(self, task_p, task_c):
         self.task_p = task_p
         self.task_c = task_c
 
-    def setSelfLink(self):
+    def setSelfLinkFlag(self):
         self.isSelfLink = True

@@ -69,7 +69,7 @@ if __name__ == '__main__':
     timestamp = int(time.time())
     print('# 生成测试集', end=',')
     st = time.clock()
-    benchmark_generation.generate(mtestSet, peroidSet_3, 0.5, 250)
+    benchmark_generation.generate(mtestSet, peroidSet_3, 0.1, 250)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 

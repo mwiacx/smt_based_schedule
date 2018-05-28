@@ -65,7 +65,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
     graph = mtestSet.graph
     for i in range(len(graph.nodeSet)):
         path = graph.find_path(i)
-        #print(distance, path)
+        #print(path)
         route[i] = path[i]
     # print(route)
     # print('###### 测试虚链路生成 ######')
@@ -162,7 +162,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         fvl = gen_a_link(route, task, task,
                          mtestSet.linkSet, graph.nodeSet, True)
         fvlink = VLink(vlid, fvl, fperoid)
-        fvlink.setSelfLink()
+        fvlink.setSelfLinkFlag()
         fvlink.setTaskPair(task, task)
         mtestSet.addVLink(fvlink)
         task.setSelfLink(fvl[0]) # 应该只有一个元素

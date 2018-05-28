@@ -1,4 +1,4 @@
-from Link import Link
+from Typing.Link import Link
 
 
 class Graph:
@@ -23,7 +23,7 @@ class Graph:
         采用迪杰斯特拉算法简单的生成整个网络拓扑的路由
         目前不考虑负载均衡
         '''
-        if not self.isNull:
+        if self.isNull:
             return None
 
         # 生成到达矩阵
@@ -40,7 +40,7 @@ class Graph:
             gList[index_a][index_b] = 1
         for i in range(len(nodes)):
             gList[i][i] = 0
-        # print(gList)
+        #print(gList)
         visited = []  # 表示已经路由到最短路径的节点集合
 
         if src in nodes:
@@ -52,7 +52,7 @@ class Graph:
         distance = {src: 0}  # 记录源节点到各个节点的距离
         for i in nodes:
             distance[i] = gList[src][i]
-        # print(distance)
+        #print(distance)
         path = {src: {src: []}}  # 记录源节点到每个节点的路径
         k = pre = src
         while nodes:
@@ -72,6 +72,6 @@ class Graph:
             # 更新两个节点集合
             visited.append(k)
             nodes.remove(k)
-            # print(visited, nodes)  # 输出
+            #print(visited, nodes)  # 输出
         # return path, distance
         return path
