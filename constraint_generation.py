@@ -302,8 +302,8 @@ def define_var(testSet):
         for link in vl_frame_list:
             framelist = vl_frame_list[link]
             for frame in framelist:
-                frame.offset = Symbol('offset_{}_({})_{}'.format(
-                    frame.vlid, frame.lname[0]+'_'+frame.lname[1], frame.fid), INT)
+                frame.setOffset(Symbol('offset_{}_({})_{}'.format(
+                    frame.vlid, frame.lname[0]+'_'+frame.lname[1], frame.fid), INT))
                 # print(frame.offset)
     return
 

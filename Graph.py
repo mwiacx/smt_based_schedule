@@ -3,8 +3,8 @@ from Link import Link
 
 class Graph:
     """graph class"""
-    nodeSet = []
-    linkSet = []
+    #nodeSet = []
+    #linkSet = []
 
     def __init__(self):
         pass
