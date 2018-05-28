@@ -1,4 +1,4 @@
-from TestSet import TestSet
+from Typing.TestSet import TestSet
 import benchmark_generation
 import constraint_generation
 

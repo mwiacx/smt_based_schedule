@@ -1,10 +1,13 @@
-from TestSet import TestSet
-from Task import Task
-from Graph import Graph
-from VLink import VLink
-from Message import Message
-from Frame import Frame
-from Link import Link
+#/usr/bin/env python
+"测试集生成模块"
+
+from Typing.TestSet import TestSet
+from Typing.Task import Task
+from Typing.Graph import Graph
+from Typing.VLink import VLink
+from Typing.Message import Message
+from Typing.Frame import Frame
+from Typing.Link import Link
 
 import time
 import random
@@ -13,7 +16,6 @@ import pdb
 
 # 全局测试参数输出文件
 outputFile = open('param_output/param_{}.txt'.format(int(time.time())), "w")
-
 
 def find_link(linkSet, node_1, node_2):
     '''
