@@ -31,9 +31,10 @@ def find_link(linkSet, node_1, node_2):
     return None
 
 
-def gen_a_link(route, task_p, task_c, linkSet, nodeSet, isSelfLink):
-
-    # 设置VLink path, exmaple:['t_0_1', 'v0', 's0', 's1', 'v3', 't_3_6']
+def gen_link_path(route, task_p, task_c, linkSet, nodeSet, isSelfLink):
+    '''
+    设置VLink path, exmaple:['t_0_1', 'v0', 's0', 's1', 'v3', 't_3_6']
+    '''
     # 添加头: self link
     vl = []
     vl_ele_head = nodeSet[task_p.nid]
@@ -105,7 +106,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_a.T = task_a.D = peroid_1
         task_b.T = task_b.D = peroid_1
 
-        vl_1 = gen_a_link(route, task_a, task_b,
+        vl_1 = gen_link_path(route, task_a, task_b,
                           mtestSet.linkSet, graph.nodeSet, False)
         # 初始化VLink类
         vlink_1 = VLink(vlid, vl_1, peroid_1)
@@ -126,7 +127,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         # 设置相关任务的周期和截止时间
         task_c.T = task_c.D = peroid_2
         task_d.T = task_d.D = peroid_2
-        vl_2 = gen_a_link(route, task_c, task_d,
+        vl_2 = gen_link_path(route, task_c, task_d,
                           mtestSet.linkSet, graph.nodeSet, False)
 
         vlink_2 = VLink(vlid, vl_2, peroid_2)
@@ -159,7 +160,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         # 生成selfLink
         fperoid = random.choice(peroidSet)
         task.T = task.D = fperoid
-        fvl = gen_a_link(route, task, task,
+        fvl = gen_link_path(route, task, task,
                          mtestSet.linkSet, graph.nodeSet, True)
         fvlink = VLink(vlid, fvl, fperoid)
         fvlink.setSelfLinkFlag()
@@ -251,7 +252,7 @@ def gen_wcet(mtestSet, utilization):
         outputFile.write('端节点{0}上通信任务利用率：{1:.4f}\n'.format(i, testUtil))
 
 
-def gen_vl_and_task(mtestSet, peroidSet, utilization):
+def gen_vlink_and_task(mtestSet, peroidSet, utilization):
     '''
     在mtestSet中生成虚链路和测试任务集
     参数：
@@ -490,7 +491,7 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
     mtestSet.initLinkSet(tlinkSet)
 
     # init virtual link set and task set
-    gen_vl_and_task(mtestSet, peroidSet, utilization)
+    gen_vlink_and_task(mtestSet, peroidSet, utilization)
 
     # init message set (static)
 

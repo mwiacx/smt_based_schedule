@@ -1,4 +1,7 @@
 
+demand_based:
+	python3 demand_based.py
+
 one_shot:
 	python3 one_shot.py
 
@@ -7,6 +10,6 @@ clean:
 	# rm *.pyc
 	# rm z3/*.pyc
 	rm -rf __pycache__
-	rm -rf z3/__pycache__
+	rm Typing/__pycache__
 	rm param_output/*
 	rm result/*

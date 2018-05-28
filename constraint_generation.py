@@ -1,3 +1,6 @@
+#/usr/bin/env python
+"约束生成模块"
+
 from pysmt.shortcuts import Symbol, Or, GE, LT, Int, LE, And, GT
 from pysmt.shortcuts import Plus, Times, Minus, Div
 from pysmt.shortcuts import Solver, is_sat
