@@ -330,81 +330,67 @@ def gen_frame_set(mtestSet):
         结构：字典: vlink id --> sub dictionary
         子字典：link id(在虚链路中的编号) --> Frame_list
     '''
+    frameSet = mtestSet.frameSet
     for i in range(len(mtestSet.vlinkSet)):
         mvl = mtestSet.vlinkSet[i]
         vlid = mvl.vlid
-        mtestSet.frameSet[i] = {}
         fid = 0
         # 生产者任务的Frame生成
         task = mvl.task_p
-        mtestSet.taskFrameSet[task] = []
         link = mvl.vl[0]
-        mtestSet.frameSet[i][link] = []
-        frame_list = mtestSet.frameSet[i][link]
         for j in range(math.ceil(task.C / link.macrotick / 1)):
             frame = Frame(vlid, fid, link.name)
             frame.setPeroid(int(task.T / link.macrotick))
             frame.setDuration(1)  # CPU Line Frame.L = 2 macrotick
-            frame_list.append(frame)
-            mtestSet.taskFrameSet[task].append(frame)
+            # add to frameSet
+            frameSet.addVlinkLinkIndex(i, link, frame)
+            frameSet.addTaskIndex(task, frame)
             fid += 1
+        # 如果只是selflink，跳过后续的步骤
         if mvl.isSelfLink:
             continue
         # 消息的Frame生成
         message = mtestSet.messageSet[i]  # 消息
         for j in range(1, len(mvl.vl) - 1):
             link = mvl.vl[j]  # 物理链路
-            mtestSet.frameSet[i][link] = []
-            frame_list = mtestSet.frameSet[i][link]
             mframe = Frame(vlid, fid, link.name)
             mframe.setPeroid(math.ceil(message.peroid / link.macrotick))
             mframe.setDuration(
                 math.ceil(message.size * link.speed_coefficient / link.macrotick))
-            frame_list.append(mframe)
+            # add to frameSet
+            frameSet.addVlinkLinkIndex(i, link, mframe)
+            frameSet.addMessageIndex(message, mframe)
             fid += 1
         # 消费者的Frame生成
         task = mvl.task_c
-        mtestSet.taskFrameSet[task] = []
         link = mvl.vl[len(mvl.vl) - 1]
-        mtestSet.frameSet[i][link] = []
-        frame_list = mtestSet.frameSet[i][link]
         for j in range(math.ceil(task.C / link.macrotick / 1)):
             frame = Frame(vlid, fid, link.name)
             frame.setPeroid(int(task.T / link.macrotick))
             frame.setDuration(1)  # CPU Line Frame.L = 2 macrotick
-            frame_list.append(frame)
-            mtestSet.taskFrameSet[task].append(frame)
+            # add to frameSet
+            frameSet.addVlinkLinkIndex(i, link, frame)
+            frameSet.addTaskIndex(task, frame)
             fid += 1
     
-    # pdb.set_trace()
-    all_frame_set = mtestSet.frameSet
     # 生成frameSet，第一层以Link检索，第二层以Vlink检索
-    all_frame_sorted_by_link = mtestSet.frameSetSortByLink
-    for vlid_t in all_frame_set:
-        vl_frame_list = all_frame_set[vlid_t]
-        for link in vl_frame_list:
-            frame_list = vl_frame_list[link]
-            for frame in frame_list:
-                # 对于每一个frame放入对应的位置
-                # 如果link索引为空，新建子字典
-                if not (link in all_frame_sorted_by_link):
-                    all_frame_sorted_by_link[link] = {}
-                # 如果vlid_t子索引为空，新建列表
-                if not (vlid_t in all_frame_sorted_by_link[link]):
-                    all_frame_sorted_by_link[link][vlid_t] = []
+    for vlid in frameSet.vlldict:
+        framedict = frameSet.vlldict[vlid]
+        for link in framedict:
+            framelist = framedict[link]
+            for frame in framelist: 
                 # 添加Frame
                 # outputFile.write('##link:{}, vlid_t:{}, frameid:{}'.format(link.name, vlid_t, frame.fid))
-                all_frame_sorted_by_link[link][vlid_t].append(frame)
+                frameSet.addLinkVlinkIndex(vlid, link, frame)
                 # outputFile.write(all_frame_sorted_by_link[link][vlid_t])
                 # OK
 
     '''
     测试Frame集合
     '''
-
     outputFile.write('###### Frame集合初始化信息(VLink版本) ######\n')
-    for vlid_t in all_frame_set:
-        vl_frame_list = all_frame_set[vlid_t]
+    for vlid_t in frameSet.vlldict:
+        vl_frame_list = frameSet.vlldict[vlid_t]
         for link in vl_frame_list:
             frame_list = vl_frame_list[link]
             for frame in frame_list:
@@ -413,8 +399,8 @@ def gen_frame_set(mtestSet):
 
     outputFile.write('###### Frame集合初始化信息(Link版本) ######\n')
     # outputFile.write(all_frame_sorted_by_link)
-    for link in all_frame_sorted_by_link:
-        link_frame_list = all_frame_sorted_by_link[link]
+    for link in frameSet.lvldict:
+        link_frame_list = frameSet.lvldict[link]
         for vlid_t in link_frame_list:
             frame_list = link_frame_list[vlid_t]
             for frame in frame_list:
@@ -517,4 +503,4 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
     outputFile.close()
 
 
-__version__ = '1.0'
+__version__ = '1.1'

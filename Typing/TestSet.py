@@ -1,4 +1,5 @@
 from Typing.Graph import Graph
+from Typing.FrameSet import FrameSet
 from Typing.Message import Message
 from Typing.Task import Task
 from Typing.VLink import VLink
@@ -7,17 +8,20 @@ from Typing.VLink import VLink
 class TestSet:
     """ schedule synthesis data set """
 
-    def __init__(self, nodeNum, switchNum):
+    def __init__(self, nodeNum, switchNum, free_task_num, com_task_num):
         self.graph = Graph()
+        self.frameSet = FrameSet()
         self.vlinkSet = []
         self.linkSet = {}
-        self.frameSet = {}
-        self.taskFrameSet = {}
-        self.frameSetSortByLink = {}
+        #self.frameSet = {}
+        #self.taskFrameSet = {}
+        #self.frameSetSortByLink = {}
         self.messageSet = []
         self.taskSet = {}
         self.nodeNum = nodeNum
         self.switchNum = switchNum
+        self.free_task_num = free_task_num
+        self.com_task_num = com_task_num
 
     def initGraph(self, linkSet, nodeSet):
         self.graph.initNodeSet(nodeSet)

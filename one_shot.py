@@ -58,7 +58,7 @@ def run_yices(mtestSet, t, constraints):
 
 
 if __name__ == '__main__':
-    mtestSet = TestSet(4, 2)
+    mtestSet = TestSet(4, 2, 8, 8)
     peroidSet_1 = [10000, 20000, 25000, 50000, 100000]
     peroidSet_2 = [10000, 30000, 100000]
     peroidSet_3 = [50000, 75000]
