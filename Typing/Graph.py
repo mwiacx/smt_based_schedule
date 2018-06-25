@@ -1,4 +1,4 @@
-from Link import Link
+from Typing import Link
 
 
 class Graph:
