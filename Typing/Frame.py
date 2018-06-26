@@ -10,7 +10,7 @@ class Frame:
         self.lname = lname # link id
         self.T = 0
         self.L = 0
-    
+
     def setPeroid(self, peroid):
         self.T = peroid
 

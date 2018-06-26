@@ -372,13 +372,13 @@ def gen_frame_set(mtestSet):
             frameSet.addVlinkLinkIndex(i, link, frame)
             frameSet.addTaskIndex(task, frame)
             fid += 1
-    
+
     # 生成frameSet，第一层以Link检索，第二层以Vlink检索
     for vlid in frameSet.vlldict:
         framedict = frameSet.vlldict[vlid]
         for link in framedict:
             framelist = framedict[link]
-            for frame in framelist: 
+            for frame in framelist:
                 # 添加Frame
                 # outputFile.write('##link:{}, vlid_t:{}, frameid:{}'.format(link.name, vlid_t, frame.fid))
                 frameSet.addLinkVlinkIndex(vlid, link, frame)
@@ -418,23 +418,16 @@ def gen_frame_set(mtestSet):
 def generate(mtestSet, peroidSet, utilization, granuolarity):
     nodeNum = mtestSet.nodeNum
     switchNum = mtestSet.switchNum
-
     #
     print('测试参数生成在{}文件'.format(outputFile.name))
-    
-    # init node set
-    nodeSet = []
-    for i in range(0, nodeNum):
-        nodeSet.append('v{0}'.format(i))
-    for i in range(0, switchNum):
-        nodeSet.append('s{0}'.format(i))
+
+    outputFile.write('###### 拓扑图初始化信息 ######\n')
+    outputFile.write('LinkSet = {}\n'.format(linkSet))
+    outputFile.write('NodeSet = {}\n'.format(nodeSet))
 
     # init link set
     tlinkSet = {}  # testSet中的linkset,包括selflink和无向的物理link
-    linkSet = []  # 拓扑图中的linkset, 双向物理link
     for i in range(0, int(nodeNum / 2)):
-        linkSet.append(['v{0}'.format(i), 's0'])
-        linkSet.append(['s0', 'v{0}'.format(i)])
         # setup tlinkSet
         vl_ele_head = 'v{}'.format(i)
         vl_ele_tail = 's0'
@@ -443,8 +436,6 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         link = Link(vl_element, speed, 10, 1)  # FIXME delay
         tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
     for i in range(int(nodeNum / 2), nodeNum):
-        linkSet.append(['v{0}'.format(i), 's1'])
-        linkSet.append(['s1', 'v{0}'.format(i)])
         # setup tlinkSet
         vl_ele_head = 'v{}'.format(i)
         vl_ele_tail = 's1'
@@ -453,8 +444,6 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         link = Link(vl_element, speed, 10, 1)  # FIXME delay
         tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
     # 交换机之间
-    linkSet.append(['s0', 's1'])
-    linkSet.append(['s1', 's0'])
     # tlinkSet
     vl_element = ['s0', 's1']
     speed = 0.008  # 1Gbit/s
@@ -467,12 +456,6 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         link = Link(vl_element, speed, 250, 250)  # FIXME delay
         tlinkSet['v{0}_v{0}'.format(i)] = link
 
-    outputFile.write('###### 拓扑图初始化信息 ######\n')
-    outputFile.write('LinkSet = {}\n'.format(linkSet))
-    outputFile.write('NodeSet = {}\n'.format(nodeSet))
-
-    # init graph
-    mtestSet.initGraph(linkSet, nodeSet)
     # init test link set (包括selflink 和 无向的物理link)
     mtestSet.initLinkSet(tlinkSet)
 

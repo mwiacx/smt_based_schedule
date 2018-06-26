@@ -1,4 +1,5 @@
 from Typing.TestSet import TestSet
+from Typing.Graph import Graph
 import benchmark_generation
 import constraint_generation
 
@@ -9,7 +10,7 @@ from pysmt.shortcuts import Solver, is_sat
 from pysmt.logics import QF_LIA
 
 def run_z3(mtestSet, t, constraints):
-    retFile = open('result/result_{}_{}.txt'.format('z3', t), "w") 
+    retFile = open('result/result_{}_{}.txt'.format('z3', t), "w")
     print('# 调用{}计算中...'.format('z3'))
     with Solver(name='z3', logic=QF_LIA) as s:
         # add constraints
@@ -29,7 +30,7 @@ def run_z3(mtestSet, t, constraints):
             et = time.clock()
             print('# {}耗时：{} s'.format('z3',et-st))
             print('# {}没有可行解...'.format('z3'))
-    
+
     retFile.close()
 
 def run_yices(mtestSet, t, constraints):
@@ -58,7 +59,30 @@ def run_yices(mtestSet, t, constraints):
 
 
 if __name__ == '__main__':
-    mtestSet = TestSet(4, 2, 8, 8)
+    # 生成拓扑图
+    nodeNum = 4
+    switchNum = 2
+    # init node set
+    nodeSet = []
+    for i in range(0, nodeNum):
+        nodeSet.append('v{0}'.format(i))
+    for i in range(0, switchNum):
+        nodeSet.append('s{0}'.format(i))
+    # init link set
+    linkSet = [] #拓扑图中的linkset, 双向物理link
+    for i in range(0, int(nodeNum / 2)):
+        linkSet.append(['v{}'.format(i), 's0'])
+        linkSet.append(['s0', 'v{}'.format(i)])
+    for i in range(int(nodeNum / 2), nodeNum):
+        linkSet.append(['v{}'.format(i), 's1'])
+        linkSet.append(['s1', 'v{}'.format(i)])
+    # 交换机之间
+    linkSet.append(['s0', 's1'])
+    linkSet.append(['s1', 's0'])
+    # init graph
+    tupo = Graph(linkSet, nodeSet)
+
+    mtestSet = TestSet(4, 2, 8, 8, tupo)
     peroidSet_1 = [10000, 20000, 25000, 50000, 100000]
     peroidSet_2 = [10000, 30000, 100000]
     peroidSet_3 = [50000, 75000]
@@ -79,7 +103,7 @@ if __name__ == '__main__':
     constraints = constraint_generation.constraints_gen(mtestSet)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
-    
+
     p_z3 = Process(target=run_z3, args=(mtestSet,timestamp, constraints))
     p_yices = Process(target=run_yices, args=(mtestSet,timestamp, constraints))
 

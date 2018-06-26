@@ -28,7 +28,7 @@ def frame_constraints(constraints, frameSet):
             framelist = vl_frame_list[link]
             for frame in framelist:
                 #aCon = (frame.offset > 0, frame.offset < frame.T - frame.L)
-                aCon = And(GT(frame.offset, Int(0)), 
+                aCon = And(GT(frame.offset, Int(0)),
                            LT(frame.offset, Int(frame.T-frame.L)))
                 #print(aCon)
                 constraints.append(aCon)
@@ -355,7 +355,7 @@ def constraints_gen(testSet):
     virtual_frame_sequence_constraints(
         constraints, testSet.frameSet, testSet.vlinkSet)
     # pdb.set_trace()
-    
+
     #retFile.close()
 
     return constraints

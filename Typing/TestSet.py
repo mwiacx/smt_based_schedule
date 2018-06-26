@@ -8,8 +8,8 @@ from Typing.VLink import VLink
 class TestSet:
     """ schedule synthesis data set """
 
-    def __init__(self, nodeNum, switchNum, free_task_num, com_task_num):
-        self.graph = Graph()
+    def __init__(self, nodeNum, switchNum, free_task_num, com_task_num, graph):
+        self.graph = graph
         self.frameSet = FrameSet()
         self.vlinkSet = []
         self.linkSet = {}
@@ -22,10 +22,6 @@ class TestSet:
         self.switchNum = switchNum
         self.free_task_num = free_task_num
         self.com_task_num = com_task_num
-
-    def initGraph(self, linkSet, nodeSet):
-        self.graph.initNodeSet(nodeSet)
-        self.graph.initLinkSet(linkSet)
 
     def initLinkSet(self, linkSet):
         self.linkSet = linkSet

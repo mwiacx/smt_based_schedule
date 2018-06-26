@@ -3,29 +3,17 @@ from Typing.Link import Link
 
 class Graph:
     """graph class"""
-    #nodeSet = []
-    #linkSet = []
 
-    def __init__(self):
-        self.isNull = True
-        pass
-
-    def initNodeSet(self, nodeSet):
+    def __init__(self, linkSet, nodeSet):
         self.nodeSet = nodeSet
-        self.isNull = False
-
-    def initLinkSet(self, linkSet):
         self.linkSet = linkSet
-        self.isNull = False
+
 
     def find_path(self, src):
         '''
         采用迪杰斯特拉算法简单的生成整个网络拓扑的路由
         目前不考虑负载均衡
         '''
-        if self.isNull:
-            return None
-
         # 生成到达矩阵
         links = self.linkSet  # 图中所有的链路
         nodestrings = self.nodeSet  # 图中所有的节点
