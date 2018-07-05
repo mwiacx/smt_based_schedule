@@ -10,7 +10,8 @@ class TestSet:
 
     def __init__(self, nodeNum, switchNum, free_task_num, com_task_num, graph):
         self.graph = graph
-        self.frameSet = FrameSet()
+        self.comFrameSet = FrameSet()
+        self.freeFrameSet = FrameSet()
         self.vlinkSet = []
         self.linkSet = {}
         #self.frameSet = {}

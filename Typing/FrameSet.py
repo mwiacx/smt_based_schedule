@@ -71,7 +71,7 @@ class FrameSet:
                 subflist += flist
                 theother.tdict[task] = flist
             else:
-                print('###Waring: 将不在FrameSet中的Task从tdict中分离in function selfSpit.')
+                print('###Waring: 将不在FrameSet中的Task从tdict中分离in function selfSplit.')
                 return self, None
         # Spilt vlldict
 
