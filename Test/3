@@ -1,0 +1,42 @@
+import sys
+sys.path.append('/home/cx/mCode/smt_based_schedule')#add father dir to import Typing.FrameSet
+#print(sys.path)
+from Typing.FrameSet import FrameSet
+from Typing.Link import Link
+from Typing.Frame import Frame
+
+if __name__ == '__main__':
+
+    print('frameSet Class function test.')
+    '''
+    Topo:
+    E1--              --E2
+        --          --
+          --S1--S2--
+        --          --
+    E3--              --E4
+    Vlink:
+        vlid=0, E1 -> S1 -> S2 -> E2
+        vlid=1, E3 -> S1 -> S2 -> E4
+        vlid=2, E1 -> S1 -> E3
+    Link:
+        E1->S1, S1->S2, S2->E2
+        E3->S1, S2->E4
+        S1->E3
+    FrameList(everyone):
+        [new Frame(vlid, fid...)]
+    '''
+
+    fs1 = FrameSet()
+
+    #Create vlldict
+    fs1.addVlinkLinkIndex(0, Link(["E1", "S1"],0,0,0), Frame(0, 0, ["E1", "S1"]))
+    fs1.addVlinkLinkIndex(0, Link(["S1", "S2"],0,0,0), Frame(0, 1, ["S1", "S2"]))
+    fs1.addVlinkLinkIndex(0, Link(["S2", "E2"],0,0,0), Frame(0, 2, ["S2", "E2"]))
+
+    fs1.addVlinkLinkIndex(1, Link(["E3", "S1"],0,0,0), Frame(0, 3, ["E3", "S1"]))
+    fs1.addVlinkLinkIndex(1, Link(["S1", "S2"],0,0,0), Frame(0, 4, ["S1", "S2"]))
+    fs1.addVlinkLinkIndex(1, Link(["S2", "E4"],0,0,0), Frame(0, 5, ["S2", "E4"]))
+
+    fs1.addVlinkLinkIndex(2, Link(["E3", "S1"],0,0,0), Frame(0, 3, ["E3", "S1"]))
+    fs1.addVlinkLinkIndex(2, Link(["S1", "S2"],0,0,0), Frame(0, 4, ["S1", "S2"]))

@@ -78,7 +78,7 @@ class FrameSet:
         # 将subflist中的frame从vlldict分离出来
         for vlid in list(self.vlldict.keys()):
             ldict = self.vlldict[vlid]
-            # theother.vlldict[vlid] = {}
+            theother.vlldict[vlid] = {}
             for link in list(ldict.keys()):
                 newlist = []
                 oldlist = ldict[link]
@@ -87,10 +87,7 @@ class FrameSet:
                         oldlist.remove(f)
                         newlist.append(f)
                 # 添加到theother
-                if newlist:
-                    if not vlid in theother.vlldict:
-                        theother.vlldict[vlid] = {}
-                    theother.vlldict[vlid][link] = newlist
+                theother.vlldict[vlid][link] = newlist
                 # 如果oldlist空了，删除相关索引
                 if not oldlist:
                     ldict.pop(link)
@@ -101,7 +98,7 @@ class FrameSet:
         # 将flist中的frame从lvldict分离出来
         for link in list(self.lvldict.keys()):
             vldict = self.lvldict[link]
-            # theother.lvldict[link] = {}
+            theother.lvldict[link] = {}
             for vlid in list(vldict.keys()):
                 newlist = []
                 oldlist = vldict[vlid]
@@ -110,10 +107,7 @@ class FrameSet:
                         oldlist.remove(f)
                         newlist.append(f)
                 # 添加到theother
-                if newlist:
-                    if not link in theother.lvldict:
-                        theother.lvldict[link] = {}
-                    theother.lvldict[link][vlid] = newlist
+                theother.lvldict[link][vlid] = newlist
                 # 如果oldlist空了，删除相关索引
                 if not oldlist:
                     vldict.pop(vlid)
@@ -129,7 +123,7 @@ class FrameSet:
     '''
     def addFrameSet(self, otherFrameSet):
         #check if they are selflink frames
-        if otherFrameSet.mdict:
+        if not otherFrameSet.mdict:
             print('The other FrameSet\'s mdict is not Empty!(method:addFrameSet)')
             return None
         #mix tdict
@@ -153,8 +147,8 @@ class FrameSet:
                     sdict[vlid][link] += flist
 
         #mix lvldict
-        odict = otherFrameSet.lvldict
-        sdict = self.lvldict
+        odict = otherFrameSet.vlldict
+        sdict = self.vlldict
         for link in odict:
             ovldict = odict[link]
             if not link in sdict:
