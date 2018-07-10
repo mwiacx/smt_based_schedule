@@ -3,6 +3,7 @@ from Typing.Nodes import Node
 from Typing.Graph import Graph
 import BenchGeneration as bg
 import ConstraintGeneration as cg 
+import SampleTupo as tupo
 
 from multiprocessing import Process
 from pysmt.shortcuts import Solver, is_sat
@@ -62,50 +63,29 @@ def run_yices(mtestSet, t, constraints):
 
 if __name__ == '__main__':
     # 生成拓扑图
-    nodeNum = 4
-    switchNum = 2
-    # init node set
-    nodeSet = []
-    for i in range(0, nodeNum):
-        nodeSet.append('v{0}'.format(i))
-    for i in range(0, switchNum):
-        nodeSet.append('s{0}'.format(i))
-    # init link set
-    linkSet = [] #拓扑图中的linkset, 双向物理link
-    for i in range(0, int(nodeNum / 2)):
-        linkSet.append(['v{}'.format(i), 's0'])
-        linkSet.append(['s0', 'v{}'.format(i)])
-    for i in range(int(nodeNum / 2), nodeNum):
-        linkSet.append(['v{}'.format(i), 's1'])
-        linkSet.append(['s1', 'v{}'.format(i)])
-    # 交换机之间
-    linkSet.append(['s0', 's1'])
-    linkSet.append(['s1', 's0'])
-    # init graph
-    tupo = Graph(linkSet, nodeSet)
+    endsystem_num, switch_num, sgraph = tupo.get_small_tupo()
+    free_task_num, com_task_num = 8, 8
+    mtestSet = TestSet(endsystem_num, switch_num, free_task_num, com_task_num, tupo)
 
-    small_graph = nx.Graph()
-    for ()
-
-    mtestSet = TestSet(4, 2, 8, 8, tupo)
     peroidSet_1 = [10000, 20000, 25000, 50000, 100000]
     peroidSet_2 = [10000, 30000, 100000]
     peroidSet_3 = [50000, 75000]
     peroidSet_4 = [50000, 60000]
     peroidSet_5 = [10000, 20000, 25000, 50000, 90000]
+
     print('###### 执行One_Shot算法 ######')
     #生产Result文件的时间戳
     timestamp = int(time.time())
     print('# 生成测试集', end=',')
     st = time.clock()
-    benchmark_generation.generate(mtestSet, peroidSet_3, 0.1, 250)
+    bg.generate(mtestSet, peroidSet_3, 0.1, 250)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 
     #生成约束
     print('# 生成约束集...')
     st = time.clock()
-    constraints = constraint_generation.constraints_gen(mtestSet)
+    constraints = cg.constraints_gen(mtestSet)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 
