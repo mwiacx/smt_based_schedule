@@ -1,13 +1,15 @@
 from Typing.TestSet import TestSet
+from Typing.Nodes import Node
 from Typing.Graph import Graph
-import benchmark_generation
-import constraint_generation
+import BenchGeneration as bg
+import ConstraintGeneration as cg 
 
-import time
 from multiprocessing import Process
-
 from pysmt.shortcuts import Solver, is_sat
 from pysmt.logics import QF_LIA
+import networkx as nx
+
+import time
 
 def run_z3(mtestSet, t, constraints):
     retFile = open('result/result_{}_{}.txt'.format('z3', t), "w")
@@ -82,6 +84,9 @@ if __name__ == '__main__':
     # init graph
     tupo = Graph(linkSet, nodeSet)
 
+    small_graph = nx.Graph()
+    for ()
+
     mtestSet = TestSet(4, 2, 8, 8, tupo)
     peroidSet_1 = [10000, 20000, 25000, 50000, 100000]
     peroidSet_2 = [10000, 30000, 100000]
@@ -104,11 +109,11 @@ if __name__ == '__main__':
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 
-    p_z3 = Process(target=run_z3, args=(mtestSet,timestamp, constraints))
+    # p_z3 = Process(target=run_z3, args=(mtestSet,timestamp, constraints))
     p_yices = Process(target=run_yices, args=(mtestSet,timestamp, constraints))
 
-    #p_z3.start()
+    # p_z3.start()
     p_yices.start()
 
     p_yices.join()
-    #p_z3.join()
+    # p_z3.join()
