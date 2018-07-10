@@ -2,7 +2,7 @@ from Typing.Nodes import Node
 from Typing.Nodes import NodeType
 import networkx as nx
 
-def get_small_tupo(es_sc, ss_sc, ldelay, sldelay, lmt, slmt):
+def get_small_tupo(es_sc=0.08, ss_sc=0.008, ldelay=50, sldelay=500, lmt=1, slmt=250):
     '''
     tupo:
     e1--        --e3
