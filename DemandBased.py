@@ -80,18 +80,18 @@ if __name__ == '__main__':
         smtFrameSet = mtestSet.comFrameSet
         while not f:
             constraints = constraint_generation.constraints_gen(mtestSet) #FIXME: should be smtFrameSet!
-            s = run_yices(mtestSet, timestamp, constraints) #FIXME: s?
-            if s:
+            S = run_yices(mtestSet, timestamp, constraints) #FIXME: s?
+            if S:
                 taskSet_d = demand_check() #FIXME: args?
                 if taskSet_d:
                     edfFrameSet, dFrameSet = edfFrameSet.selfSplit(taskSet_d)
                     smtFrameSet = smtFrameSet.addFrameSet(dFrameSet)
                 else:
-                    f = True
+                    f = False
                     if edfFrameSet:
-                        s += EDFSim() #FIXME: funcname? args?
+                        S += EDFSim() #FIXME: funcname? args?
             else:
                 f = True
 
-    print S
+    print (S)
     #FIXME: visual?

@@ -1,18 +1,17 @@
 from Typing.TestSet import TestSet
 from Typing.Nodes import Node
-from Typing.Graph import Graph
-import BenchGeneration as bg
-import ConstraintGeneration as cg 
-import SampleTupo as tupo
+import BenchGeneration as BG
+import ConstraintGeneration as CG 
+import SampleTupo as TUPO
 
 from multiprocessing import Process
 from pysmt.shortcuts import Solver, is_sat
 from pysmt.logics import QF_LIA
-import networkx as nx
+import networkx as NX
 
 import time
 
-def run_z3(mtestSet, t, constraints):
+def run_z3(mTestSet, t, constraints):
     retFile = open('result/result_{}_{}.txt'.format('z3', t), "w")
     print('# 调用{}计算中...'.format('z3'))
     with Solver(name='z3', logic=QF_LIA) as s:
@@ -23,8 +22,8 @@ def run_z3(mtestSet, t, constraints):
         if s.solve():
             et = time.clock()
             print('# {}耗时：{} s'.format('z3',et-st))
-            for vlid_t in mtestSet.frameSet:
-                frameSameVLink = mtestSet.frameSet[vlid_t]
+            for vlid_t in mTestSet.frameSet:
+                frameSameVLink = mTestSet.frameSet[vlid_t]
                 for link in frameSameVLink:
                     frameSameLink = frameSameVLink[link]
                     for frame in frameSameLink:
@@ -36,7 +35,7 @@ def run_z3(mtestSet, t, constraints):
 
     retFile.close()
 
-def run_yices(mtestSet, t, constraints):
+def run_yices(mTestSet, t, constraints):
     retFile = open('result/result_{}_{}.txt'.format('yices', t), "w")
     print('# 调用{}计算中...'.format('yices'))
     with Solver(name='yices', logic=QF_LIA) as s:
@@ -47,8 +46,8 @@ def run_yices(mtestSet, t, constraints):
         if s.solve():
             et = time.clock()
             print('# {}耗时：{} s'.format('yices',et-st))
-            for vlid_t in mtestSet.frameSet:
-                frameSameVLink = mtestSet.frameSet[vlid_t]
+            for vlid_t in mTestSet.frameSet:
+                frameSameVLink = mTestSet.frameSet[vlid_t]
                 for link in frameSameVLink:
                     frameSameLink = frameSameVLink[link]
                     for frame in frameSameLink:
@@ -63,10 +62,11 @@ def run_yices(mtestSet, t, constraints):
 
 if __name__ == '__main__':
     # 生成拓扑图
-    endsystem_num, switch_num, sgraph = tupo.get_small_tupo()
-    free_task_num, com_task_num = 8, 8
-    mtestSet = TestSet(endsystem_num, switch_num, free_task_num, com_task_num, tupo)
-
+    endSystemNum, switchNum, smallGraph = TUPO.get_small_tupo()
+    freeTaskNum, comTaskNum = 8, 8 # 每个终端节点的任务个数，分为Free Task和Commun Task
+    # 初始化Test Set
+    mTestSet = TestSet(endSystemNum, switchNum, freeTaskNum, comTaskNum, smallGraph)
+    # 周期族，测试用
     peroidSet_1 = [10000, 20000, 25000, 50000, 100000]
     peroidSet_2 = [10000, 30000, 100000]
     peroidSet_3 = [50000, 75000]
@@ -78,19 +78,20 @@ if __name__ == '__main__':
     timestamp = int(time.time())
     print('# 生成测试集', end=',')
     st = time.clock()
-    bg.generate(mtestSet, peroidSet_3, 0.1, 250)
+    # 利用率设置为0.5，任务调度粒度为250微秒
+    BG.gen_testSet(mTestSet, peroidSet_3, 0.1, 250)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 
     #生成约束
     print('# 生成约束集...')
     st = time.clock()
-    constraints = cg.constraints_gen(mtestSet)
+    constraints = CG.constraints_gen(mTestSet)
     et = time.clock()
     print('  耗时：{} s'.format(et-st))
 
-    # p_z3 = Process(target=run_z3, args=(mtestSet,timestamp, constraints))
-    p_yices = Process(target=run_yices, args=(mtestSet,timestamp, constraints))
+    # p_z3 = Process(target=run_z3, args=(mTestSet,timestamp, constraints))
+    p_yices = Process(target=run_yices, args=(mTestSet,timestamp, constraints))
 
     # p_z3.start()
     p_yices.start()

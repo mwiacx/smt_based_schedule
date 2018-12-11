@@ -1,40 +1,40 @@
-from Typing.Graph import Graph
 from Typing.FrameSet import FrameSet
-from Typing.Message import Message
-from Typing.Task import Task
+from Typing.Nodes import Task
 from Typing.VLink import VLink
 
 
 class TestSet:
-    """ schedule synthesis data set """
+    """ 
+    类描述：
+        schedule synthesis data set
+    成员变量：
+        nodeNum:
+        switchNum:
+        freeTaskNum:
+        comTaskNum:
+        graph:
+        comFrameSet:
+        freeFrameSet:
+        vLinkSet:
+    """
 
-    def __init__(self, nodeNum, switchNum, free_task_num, com_task_num, graph):
-        self.graph = graph
-        self.comFrameSet = FrameSet()
-        self.freeFrameSet = FrameSet()
-        self.vlinkSet = []
-        self.linkSet = {}
-        #self.frameSet = {}
-        #self.taskFrameSet = {}
-        #self.frameSetSortByLink = {}
-        self.messageSet = []
-        self.taskSet = {}
-        self.nodeNum = nodeNum
-        self.switchNum = switchNum
+    def __init__(self, node_num, switch_num, free_task_num, comm_task_num, graph):
+        self.node_num = node_num
+        self.switch_num = switch_num
         self.free_task_num = free_task_num
-        self.com_task_num = com_task_num
+        self.comm_task_num = comm_task_num
+        #self.messageSet = []
+        self.graph = graph
+        #
+        self.comm_frame_set = FrameSet()
+        self.free_frame_set = FrameSet()
+        self.vlink_set = []
 
-    def initLinkSet(self, linkSet):
-        self.linkSet = linkSet
+    def add_vlink(self, vlink):
+        self.vlink_set.append(vlink)
 
-    def addVLink(self, vlink):
-        self.vlinkSet.append(vlink)
+    #def initMessageSet(self, mSet):
+    #    self.messageSet = mSet
 
-    def initMessageSet(self, mSet):
-        self.messageSet = mSet
-
-    def initTaskSet(self, taskSet):
-        self.taskSet = taskSet
-
-    def addMessage(self, mmessage):
-        self.messageSet.append(mmessage)
+    #def addMessage(self, mmessage):
+    #    self.messageSet.append(mmessage)

@@ -1,4 +1,9 @@
-from Typing.Link import Link
+class Message:
+    """Message module"""
+
+    def __init__(self, peroid, size):
+        self.peroid = peroid
+        self.size = size
 
 class VLink:
     """Virtual Link module"""
@@ -10,12 +15,16 @@ class VLink:
     def __init__(self, vlid, vl, max_latency):
         self.vlid = vlid
         self.vl = vl
+        self.message = None
         self.max_latency = max_latency
         self.isSelfLink = False
 
-    def setTaskPair(self, task_p, task_c):
-        self.task_p = task_p
-        self.task_c = task_c
+    def setTaskPair(self, taskp, taskc):
+        self.taskp = taskp
+        self.taskc = taskc
+
+    def setMessageInfo(self, peroid, size):
+        self.message = Message(peroid, size)
 
     def setSelfLinkFlag(self):
         self.isSelfLink = True

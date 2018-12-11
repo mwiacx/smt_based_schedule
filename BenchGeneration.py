@@ -1,92 +1,42 @@
-#/usr/bin/env python
 "测试集生成模块"
-
 from Typing.TestSet import TestSet
-from Typing.Task import Task
-from Typing.Graph import Graph
 from Typing.VLink import VLink
-from Typing.Message import Message
 from Typing.Frame import Frame
-from Typing.Link import Link
+from Typing.Task import Task
+from Typing.Nodes import Node, NodeType
 
+import networkx as nx
 import time
 import random
 import math
-import pdb
 
 # 全局测试参数输出文件
 outputFile = open('param_output/param_{}.txt'.format(int(time.time())), "w")
 
-def find_link(linkSet, node_1, node_2):
-    '''
-    返回linkSet中node_1与node_2之间的链路，无方向
-    找到返回Link，否则返回None
-    '''
-    key = '{}_{}'.format(node_1, node_2)
-    if key in linkSet:
-        return linkSet[key]
-    key = '{}_{}'.format(node_2, node_1)
-    if key in linkSet:
-        return linkSet[key]
-    return None
-
-
-def gen_link_path(route, task_p, task_c, linkSet, nodeSet, isSelfLink):
-    '''
-    设置VLink path, exmaple:['t_0_1', 'v0', 's0', 's1', 'v3', 't_3_6']
-    '''
-    # 添加头: self link
-    vl = []
-    vl_ele_head = nodeSet[task_p.nid]
-    link = find_link(linkSet, vl_ele_head, vl_ele_head)
-    vl.append(link)
-    if isSelfLink:
-        return vl
-    # 从计算好的路由中取出最短路径
-    path = route[task_p.nid][task_c.nid]
-    # 添加到VLink中
-    for node in path:
-        vl_ele_tail = nodeSet[node]
-        link = find_link(linkSet, vl_ele_head, vl_ele_tail)
-        vl.append(link)
-        # 设置下一个头
-        vl_ele_head = nodeSet[node]
-    # 添加尾： self link
-    vl_ele_tail = vl_ele_head
-    link = find_link(linkSet, vl_ele_head, vl_ele_tail)
-    vl.append(link)
-
-    return vl
-
-
-def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
+def gen_vlink(mTestSet, dist_task_list, peroid_set):
     # 生成 Virtual Link
     # 先用迪杰斯特拉算法计算整个图的路由
-    route = {}
-    graph = mtestSet.graph
-    for i in range(len(graph.nodeSet)):
-        path = graph.find_path(i)
-        #print(path)
-        route[i] = path[i]
-    # print(route)
+    graph = mTestSet.graph
+    shortest_path = nx.shortest_path(graph)
+    
     # print('###### 测试虚链路生成 ######')
     vlid = 0
-    while distTaskList:
+    while dist_task_list:
         '''
         # 每次产生两条，为解决剩余任务都在一个节点上的BUG
         # 每次选择两个端节点，对应任务集TaskList_1(3)和TaskList_2(4)
         # 在选出的两个任务集中再选择两个任务task_a(c)和task_b(d)
         '''
-        TaskList_1 = random.choice(distTaskList)
+        TaskList_1 = random.choice(dist_task_list)
         # print(TaskList_1[3].nid)
         # 将已选端节点的集合移除避免重复选择端节点集合
-        distTaskList.remove(TaskList_1)
-        TaskList_2 = random.choice(distTaskList)
-        distTaskList.remove(TaskList_2)
-        TaskList_3 = random.choice(distTaskList)
-        distTaskList.remove(TaskList_3)
-        TaskList_4 = random.choice(distTaskList)
-        distTaskList.remove(TaskList_4)
+        dist_task_list.remove(TaskList_1)
+        TaskList_2 = random.choice(dist_task_list)
+        dist_task_list.remove(TaskList_2)
+        TaskList_3 = random.choice(dist_task_list)
+        dist_task_list.remove(TaskList_3)
+        TaskList_4 = random.choice(dist_task_list)
+        dist_task_list.remove(TaskList_4)
         # print(TaskList_2[3].nid)
         # 选择并移除随机的两个任务
         task_a = random.choice(TaskList_1)
@@ -107,7 +57,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_b.T = task_b.D = peroid_1
 
         vl_1 = gen_link_path(route, task_a, task_b,
-                          mtestSet.linkSet, graph.nodeSet, False)
+                          mTestSet.linkSet, graph.nodeSet, False)
         # 初始化VLink类
         vlink_1 = VLink(vlid, vl_1, peroid_1)
         # 添加生产者任务和消费者任务
@@ -118,7 +68,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_a.setSelfLink(vl_1[0])  # 生产者
         task_b.setSelfLink(vl_1[len(vl_1)-1])  # 消费者
         # 添加到测试集类中
-        mtestSet.addVLink(vlink_1)
+        mTestSet.addVLink(vlink_1)
         vlid += 1
         '''
         第二条虚拟链路
@@ -128,7 +78,7 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_c.T = task_c.D = peroid_2
         task_d.T = task_d.D = peroid_2
         vl_2 = gen_link_path(route, task_c, task_d,
-                          mtestSet.linkSet, graph.nodeSet, False)
+                          mTestSet.linkSet, graph.nodeSet, False)
 
         vlink_2 = VLink(vlid, vl_2, peroid_2)
         vlink_2.setTaskPair(task_c, task_d)
@@ -138,21 +88,21 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         task_c.setSelfLink(vl_2[0])  # 生产者
         task_d.setSelfLink(vl_2[len(vl_2)-1])  # 消费者
 
-        mtestSet.addVLink(vlink_2)
+        mTestSet.addVLink(vlink_2)
         vlid += 1
         '''
         注意将非空的集合放回
         '''
         # 将集合1重新放入，在其不为空时
         if TaskList_1:
-            distTaskList.append(TaskList_1)
+            dist_task_list.append(TaskList_1)
         if TaskList_2:
-            distTaskList.append(TaskList_2)
+            dist_task_list.append(TaskList_2)
         if TaskList_3:
-            distTaskList.append(TaskList_3)
+            dist_task_list.append(TaskList_3)
         if TaskList_4:
-            distTaskList.append(TaskList_4)
-        # print(distTaskList)
+            dist_task_list.append(TaskList_4)
+        # print(dist_task_list)
 
     # 生成Free-task的selfLink以及对应的VLink
     for task in freeTaskList:
@@ -161,18 +111,18 @@ def gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet):
         fperoid = random.choice(peroidSet)
         task.T = task.D = fperoid
         fvl = gen_link_path(route, task, task,
-                         mtestSet.linkSet, graph.nodeSet, True)
+                         mTestSet.linkSet, graph.nodeSet, True)
         fvlink = VLink(vlid, fvl, fperoid)
         fvlink.setSelfLinkFlag()
         fvlink.setTaskPair(task, task)
-        mtestSet.addVLink(fvlink)
+        mTestSet.addVLink(fvlink)
         task.setSelfLink(fvl[0]) # 应该只有一个元素
         vlid += 1
 
     return True
 
 
-def gen_wcet(mtestSet, utilization):
+def gen_wcet(mTestSet, utilization):
     '''
     根据任务的利用率调整任务的WCET
     参数：
@@ -186,13 +136,13 @@ def gen_wcet(mtestSet, utilization):
 
     free_task_util = free_task_ratio * utilization  # free任务的利用率
     comu_task_util = utilization - free_task_util  # 通信任务的利用率
-    nodeNum = mtestSet.nodeNum
+    nodeNum = mTestSet.nodeNum
 
     '''
     遍历free任务集，为每一个任务计算WCET
     '''
     for i in range(nodeNum):
-        taskList = mtestSet.taskSet[i]
+        taskList = mTestSet.taskSet[i]
         rest_util = free_task_util
         task_index = comu_task_num
         while task_index < all_task_num - 1:
@@ -211,7 +161,7 @@ def gen_wcet(mtestSet, utilization):
     遍历通信任务集，为每一个任务计算WCET
     '''
     for i in range(nodeNum):
-        taskList = mtestSet.taskSet[i]
+        taskList = mTestSet.taskSet[i]
         rest_util = comu_task_util
         task_index = 0
         while task_index < comu_task_num - 1:
@@ -231,7 +181,7 @@ def gen_wcet(mtestSet, utilization):
     验证free任务的总利用为 0.75 * utilization
     '''
     for i in range(nodeNum):
-        taskList = mtestSet.taskSet[i]
+        taskList = mTestSet.taskSet[i]
         testUtil = 0
         for j in range(comu_task_num, all_task_num):
             if (taskList[j].C < 0):
@@ -243,7 +193,7 @@ def gen_wcet(mtestSet, utilization):
     验证通信任务的总利用为 0.25 * utilization
     '''
     for i in range(nodeNum):
-        taskList = mtestSet.taskSet[i]
+        taskList = mTestSet.taskSet[i]
         testUtil = 0
         for j in range(0, comu_task_num):
             if (taskList[j].C < 0):
@@ -252,7 +202,7 @@ def gen_wcet(mtestSet, utilization):
         outputFile.write('端节点{0}上通信任务利用率：{1:.4f}\n'.format(i, testUtil))
 
 
-def gen_vlink_and_task(mtestSet, peroidSet, utilization):
+def gen_vlink_and_task(mTestSet, peroid_set, utilization):
     '''
     在mtestSet中生成虚链路和测试任务集
     参数：
@@ -260,46 +210,54 @@ def gen_vlink_and_task(mtestSet, peroidSet, utilization):
         peroidSet：预定义的周期集合，任务的周期在其中随机挑选
         utilization: 每个端节点上的利用率
     '''
-    nodeNum = mtestSet.nodeNum
+    #node_num = mTestSet.node_num
+    free_task_num = mTestSet.free_task_num # 无通讯任务个数，每端节点
+    comm_task_num = mTestSet.comm_task_num  # 通信任务个数，每端节点
+    all_task_num = free_task_num + comm_task_num
+    graph = mTestSet.graph # 拓扑结构图
 
-    # 常量定义
-    vlinkNum = int(2 * nodeNum / 2)  # 每个节点：8 free-task, 8 communicating-task
-    allTaskNum = 16
-    communTaskNum = 8  # 通信任务个数，每个端节点上
-    # 存储每个节点上任务集合的字典
-    allTaskList = {}
+    # 每个节点：8 free-task, 8 communicating-task
+    #vlink_num = comm_task_num * node_num // 2
+    #selflink_num = all_task_num * node_num
+
     # 用于生成虚链路，存储每个节点上的通信任务集
-    distTaskList = []
-    # free task list
-    freeTaskList = []
-    for i in range(0, nodeNum):
+    dist_task_list = []
+
+    for node in graph.nodes:
+        # 排除交换机
+        if node.ntype == NodeType.ENDSYSTEM:
+            continue
         # 把同个端节点上的任务放到一个列表里
-        taskList = []
-        allTaskList[i] = []
-        for j in range(0, communTaskNum):
-            ttask = Task(i, j)
+        task_list = []
+        print("### Node ID {}.\n".format(node.nid))
+        # Comm Task Gens
+        for i in range(0, comm_task_num):
+            # tid高16为表示节点编号，低16位表示节点内任务编号
+            _tid = (node.nid << 16) | i 
+            _ttask = Task(tid=_tid)
             # 放入所有task的集合
-            allTaskList[i].append(ttask)
+            node.comm_task_list.append(_ttask)
             # 放入同一端节点的通信任务集合
-            taskList.append(ttask)
-        for j in range(communTaskNum, allTaskNum):
+            task_list.append(_ttask)
+        # Free Task Gens
+        for j in range(comm_task_num, all_task_num):
             # free-task 生成
-            ttask = Task(i, j)
-            peroid = random.choice(peroidSet)
-            ttask.T = ttask.D = peroid
-            freeTaskList.append(ttask)
-            allTaskList[i].append(ttask)
+            _tid = (node.nid << 16) | j
+            _ftask = Task(tid=_tid)
+            _peroid = random.choice(peroid_set)
+            _ftask.T = _ftask.D = _peroid
+            node.free_task_list.append(_ftask)
         # 所有列表组成一个大列表
-        distTaskList.append(taskList)
+        dist_task_list.append(task_list)
 
     # 初始化 TestSet的任务集
-    mtestSet.initTaskSet(allTaskList)
+    # mTestSet.initTaskSet(all_task_list)
 
     # 生成虚链路
-    gen_vlink(mtestSet, distTaskList, freeTaskList, peroidSet)
+    gen_vlink(mTestSet, dist_task_list, peroid_set)
 
     # 根据利用率调整任务的wcet（task.C）
-    gen_wcet(mtestSet, utilization)
+    gen_wcet(mTestSet, utilization)
 
     '''
     测试生成的任务集合和生成的虚拟链路集合
@@ -309,30 +267,30 @@ def gen_vlink_and_task(mtestSet, peroidSet, utilization):
         outputFile.write('End System id {}:\n'.format(i))
         for j in range(allTaskNum):
             outputFile.write('task_{}_{}: C = {},\tT = D = {},\tvlid={},\tselfLink.name={}\n'.format(
-                allTaskList[i][j].nid, allTaskList[i][j].tid, allTaskList[i][j].C,
-                allTaskList[i][j].T, allTaskList[i][j].vlid, allTaskList[i][j].selfLink.name))
+                all_task_list[i][j].nid, all_task_list[i][j].tid, all_task_list[i][j].C,
+                all_task_list[i][j].T, all_task_list[i][j].vlid, all_task_list[i][j].selfLink.name))
     outputFile.write('###### 生成的虚拟链路信息 ######\n')
     for i in range(vlinkNum):
-        vlink = mtestSet.vlinkSet[i]
+        vlink = mTestSet.vlinkSet[i]
         outputFile.write('vlink id {}:\n'.format(vlink.vlid))
-        # outputFile.write(mtestSet.vlinkSet[i].vl, end=', ')
+        # outputFile.write(mTestSet.vlinkSet[i].vl, end=', ')
         for link in vlink.vl:
             outputFile.write('{}.s = {}, '.format(link.name, link.speed_coefficient))
         outputFile.write('head = task_{}_{}, tail = task_{}_{}, '.format(
             vlink.task_p.nid, vlink.task_p.tid, vlink.task_c.nid, vlink.task_c.tid))
-        outputFile.write('max_latency = {}.\n'.format(mtestSet.vlinkSet[i].max_latency))
+        outputFile.write('max_latency = {}.\n'.format(mTestSet.vlinkSet[i].max_latency))
 
     return True
 
 
-def gen_frame_set(mtestSet):
+def gen_frame_set(mTestSet):
     '''
         结构：字典: vlink id --> sub dictionary
         子字典：link id(在虚链路中的编号) --> Frame_list
     '''
-    frameSet = mtestSet.frameSet
-    for i in range(len(mtestSet.vlinkSet)):
-        mvl = mtestSet.vlinkSet[i]
+    frameSet = mTestSet.frameSet
+    for i in range(len(mTestSet.vlinkSet)):
+        mvl = mTestSet.vlinkSet[i]
         vlid = mvl.vlid
         fid = 0
         # 生产者任务的Frame生成
@@ -350,7 +308,7 @@ def gen_frame_set(mtestSet):
         if mvl.isSelfLink:
             continue
         # 消息的Frame生成
-        message = mtestSet.messageSet[i]  # 消息
+        message = mTestSet.messageSet[i]  # 消息
         for j in range(1, len(mvl.vl) - 1):
             link = mvl.vl[j]  # 物理链路
             mframe = Frame(vlid, fid, link.name)
@@ -407,65 +365,36 @@ def gen_frame_set(mtestSet):
                 outputFile.write('Frame_({})_{}_{}\t: T = {},\tL = {}\n'.format(
                     frame.lname[0]+'_'+frame.lname[1], frame.vlid, frame.fid, frame.T, frame.L))
     outputFile.write('###### Frame集合初始化信息(Task版本) ######\n')
-    for task in mtestSet.taskFrameSet:
-        task_frame_list = mtestSet.taskFrameSet[task]
+    for task in mTestSet.taskFrameSet:
+        task_frame_list = mTestSet.taskFrameSet[task]
         outputFile.write('Task_{}_{}:\n'.format(task.nid, task.tid))
         for frame in task_frame_list:
             outputFile.write('\tFrame_({})_{}_{}\t: T = {},\tL = {}\n'.format(
                     frame.lname[0]+'_'+frame.lname[1], frame.vlid, frame.fid, frame.T, frame.L))
 
 
-def generate(mtestSet, peroidSet, utilization, granuolarity):
-    nodeNum = mtestSet.nodeNum
-    switchNum = mtestSet.switchNum
+def gen_testSet(mTestSet, peroidSet, utilization, granuolarity):
+    '''
+    功能描述：
+        生成测试集
+    参数描述：
+        mTestSet: 测试集类
+        peroidSet: 任务周期集合
+        utilization: 任务集总体利用率
+        granuolarity: 任务调度时间粒度，单位：微秒
+    '''
     #
     print('测试参数生成在{}文件'.format(outputFile.name))
 
     outputFile.write('###### 拓扑图初始化信息 ######\n')
-    outputFile.write('LinkSet = {}\n'.format(linkSet))
-    outputFile.write('NodeSet = {}\n'.format(nodeSet))
-
-    # init link set
-    tlinkSet = {}  # testSet中的linkset,包括selflink和无向的物理link
-    for i in range(0, int(nodeNum / 2)):
-        # setup tlinkSet
-        vl_ele_head = 'v{}'.format(i)
-        vl_ele_tail = 's0'
-        vl_element = [vl_ele_head, vl_ele_tail]
-        speed = 0.08  # 100Mbit/s 链路传输一个字节需要的时间
-        link = Link(vl_element, speed, 10, 1)  # FIXME delay
-        tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
-    for i in range(int(nodeNum / 2), nodeNum):
-        # setup tlinkSet
-        vl_ele_head = 'v{}'.format(i)
-        vl_ele_tail = 's1'
-        vl_element = [vl_ele_head, vl_ele_tail]
-        speed = 0.08  # 100Mbit/s 链路传输一个字节需要的时间
-        link = Link(vl_element, speed, 10, 1)  # FIXME delay
-        tlinkSet['{}_{}'.format(vl_ele_head, vl_ele_tail)] = link
-    # 交换机之间
-    # tlinkSet
-    vl_element = ['s0', 's1']
-    speed = 0.008  # 1Gbit/s
-    link = Link(vl_element, speed, 10, 1)
-    tlinkSet['s0_s1'] = link
-    # tlinkSet selflink
-    for i in range(0, nodeNum):
-        vl_element = ['v{}'.format(i), 'v{}'.format(i)]
-        speed = 0  # 暂时不用
-        link = Link(vl_element, speed, 250, 250)  # FIXME delay
-        tlinkSet['v{0}_v{0}'.format(i)] = link
-
-    # init test link set (包括selflink 和 无向的物理link)
-    mtestSet.initLinkSet(tlinkSet)
 
     # init virtual link set and task set
-    gen_vlink_and_task(mtestSet, peroidSet, utilization)
+    gen_vlink_and_task(mTestSet, peroidSet, utilization)
 
     # init message set (static)
 
-    for i in range(len(mtestSet.vlinkSet)):
-        mvl = mtestSet.vlinkSet[i]
+    for i in range(len(mTestSet.vlinkSet)):
+        mvl = mTestSet.vlinkSet[i]
         if mvl.isSelfLink:
             continue
         vlid = mvl.vlid
@@ -473,17 +402,17 @@ def generate(mtestSet, peroidSet, utilization, granuolarity):
         size = random.randint(84, 1542)
         mmessage = Message(vlid, T, size)
         # 添加到测试类中
-        mtestSet.addMessage(mmessage)
+        mTestSet.addMessage(mmessage)
 
     outputFile.write('###### Message集合初始化信息 ######\n')
-    for mm in mtestSet.messageSet:
+    for mm in mTestSet.messageSet:
         outputFile.write('Message_{}:\tT = {}, L = {}\n'.format(mm.vlid, mm.peroid, mm.size))
 
     # init Frame set (static)
-    gen_frame_set(mtestSet)
+    gen_frame_set(mTestSet)
 
     #close file
     outputFile.close()
 
 
-__version__ = '1.1'
+__version__ = '2.0'
